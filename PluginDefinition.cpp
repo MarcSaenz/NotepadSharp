@@ -18,22 +18,7 @@
 #include "tchar.h"
 #include "PluginDefinition.h"
 #include "menuCmdID.h"
-
-#define FEATURES TEXT("\
-Features implemented in this release\r\n\r\n\
-- Proper new line inside DocBock for C, C++, Javascript, PHP\r\n\
-- Proper new line for # comment in Ruby\r\n\
-- Indent after opening curly brace for C-like languages\r\n\
-  and proper indenting for closing curly brace\r\n\
-- Delete current line keeping the column\r\n\
-- Undo closed tab\r\n\
-")
-
-#define ABOUT TEXT("\
-This plugin implements all the features I wanted to see in Notepad++\r\n\
-for years, hope you will find it useful for you too.\r\n\r\n\
-jvdanilo\r\n\
-")
+#include "Version.h"
 
 // The plugin data that Notepad++ needs
 //
@@ -177,6 +162,9 @@ void Newline()
     {
         case L_C:
         case L_CPP:
+            cStyleComment(curScintilla, line);
+            indentAfterCurlyBrace(curScintilla, line_number - 1);
+            break;
         case L_CSS:
             cStyleComment(curScintilla, line);
             break;

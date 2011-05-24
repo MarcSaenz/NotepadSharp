@@ -147,6 +147,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <ImportLibrary>$(OutDir)NotepadSharp.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <Version>
+      </Version>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -193,6 +195,10 @@ exit
     <ClInclude Include="PluginInterface.h" />
     <ClInclude Include="DockingFeature\resource.h" />
     <ClInclude Include="Scintilla.h" />
+    <ClInclude Include="Version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
