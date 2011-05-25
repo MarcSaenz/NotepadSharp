@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 4;
+const int nbFunc = 8;
 
 
 //
@@ -84,11 +84,18 @@ void indentEndingCurlyBrace();
 
 void delete_current_line();
 
+// Switching buffers
+void buffer_left();
+void buffer_right();
+
 // Undo closed files functions
 void get_all_files();
 void get_files_now();
 void find_missing();
 void undo_closed_tab();
+
+void closed_file_list();
+void insertList();
 
 // Heper functions
 HWND getCurrentScintilla();

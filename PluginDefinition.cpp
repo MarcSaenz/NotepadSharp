@@ -95,8 +95,23 @@ void commandMenuInit()
     I_key->_key        = 0x49 ; // I
     //setCommand(2, TEXT("INSERT ALL FILES LIST"), closed_file_list, I_key, false);
 
-    setCommand(2, TEXT("Features"), show_features, NULL, false);
-    setCommand(3, TEXT("About"), show_about, NULL, false);
+
+    ShortcutKey *LEFT_key = new ShortcutKey;
+    LEFT_key->_isAlt      = true;
+    LEFT_key->_isCtrl     = false;
+    LEFT_key->_isShift    = false;
+    LEFT_key->_key        = VK_LEFT ; // LEFT
+    setCommand(3, TEXT("Tab left"), buffer_left, LEFT_key, false);
+
+    ShortcutKey *RIGHT_key = new ShortcutKey;
+    RIGHT_key->_isAlt      = true;
+    RIGHT_key->_isCtrl     = false;
+    RIGHT_key->_isShift    = false;
+    RIGHT_key->_key        = VK_RIGHT ; // RIGHT
+    setCommand(4, TEXT("Tab right"), buffer_right, RIGHT_key, false);
+
+    setCommand(6, TEXT("Features"), show_features, NULL, false);
+    setCommand(7, TEXT("About"), show_about, NULL, false);
 }
 
 //
@@ -416,7 +431,7 @@ void delete_current_line()
  * WITH ALT+LEFT_ARROW AND ALT+RIGHT_ARROW
  */
 
-char closed_files[30][MAX_PATH] = {};
+char closed_files[300][MAX_PATH] = {};
 int closed_files_index = 0;
 
 void undo_closed_tab()
@@ -446,7 +461,7 @@ void undo_closed_tab()
 
 }
 
-char all_files[30][MAX_PATH] = {};
+char all_files[300][MAX_PATH] = {};
 int all_files_index = 0;
 
 void get_all_files()
@@ -486,7 +501,7 @@ void get_all_files()
 
 }
 
-char now_files[30][MAX_PATH] = {};
+char now_files[300][MAX_PATH] = {};
 int now_files_index = 0;
 
 void get_files_now()
@@ -527,14 +542,18 @@ void find_missing()
     HWND curScintilla = getCurrentScintilla();
     
     get_files_now();
-    now_files_index = 0;
 
     int has = 0;
 
     int i;
     int j;
 
-    for(i = 0; i < 30; i++)
+    int all_files_loop = all_files_index + 1;
+    int now_files_loop = now_files_index + 1;
+    
+    now_files_index = 0;
+
+    for(i = 0; i < all_files_loop; i++)
     {
         if (strlen(all_files[i]) < 1)
         {
@@ -543,7 +562,7 @@ void find_missing()
         
         has = 0;
 
-        for (j = 0; j < 30; j++)
+        for (j = 0; j < now_files_loop; j++)
         {
             if (strlen(now_files[j]) < 1)
             {
@@ -621,6 +640,57 @@ void insertList()
     ::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)"FILES AFTER CLOSE");
 }
 
+void buffer_left()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int buffer;
+    int pos;
+
+    buffer = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    pos = ::SendMessage(nppData._nppHandle, NPPM_GETPOSFROMBUFFERID , buffer, 0);
+
+    pos--;
+
+    int left_buffer = ::SendMessage(nppData._nppHandle, NPPM_GETBUFFERIDFROMPOS , pos, 0);
+
+    TCHAR full_file_path[MAX_PATH];
+    char path_text[MAX_PATH];
+
+    ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, left_buffer, (LPARAM)full_file_path);
+
+    WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
+
+    //::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)path_text);
+    ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)path_text);
+}
+
+void buffer_right()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int buffer;
+    int pos;
+
+    buffer = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    pos = ::SendMessage(nppData._nppHandle, NPPM_GETPOSFROMBUFFERID , buffer, 0);
+
+    pos++;
+
+    int left_buffer = ::SendMessage(nppData._nppHandle, NPPM_GETBUFFERIDFROMPOS , pos, 0);
+
+    TCHAR full_file_path[MAX_PATH];
+    char path_text[MAX_PATH];
+
+    ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, left_buffer, (LPARAM)full_file_path);
+
+    WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
+
+    //::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)path_text);
+    ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)path_text);
+}
 
 /**
  * HELPER FUNCTIONS

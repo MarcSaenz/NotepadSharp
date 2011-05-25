@@ -11,3 +11,4 @@ Implemented so far:
   and proper indenting for closing curly brace
 - Delete current line keeping the column
 - Undo closed tab
+- Switching tabs with ALT + LEFT/RIGHT

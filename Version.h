@@ -3,13 +3,14 @@
 #define VERSION_NUM 0,7
 
 #define FEATURES TEXT("\
-Features implemented in this release\r\n\r\n\
+Features implemented so far:\r\n\r\n\
 - Proper new line inside DocBock for C, C++, Javascript, PHP\r\n\
 - Proper new line for # comment in Ruby\r\n\
 - Indent after opening curly brace for C-like languages\r\n\
   and proper indenting for closing curly brace\r\n\
 - Delete current line keeping the column\r\n\
 - Undo closed tab\r\n\
+- Switching tabs with ALT + LEFT/RIGHT\r\n\
 ")
 
 #define ABOUT TEXT("\
