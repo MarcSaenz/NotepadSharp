@@ -13,3 +13,4 @@ Implemented so far:
 - Undo closed tab
 - Switching tabs with ALT + LEFT/RIGHT
 - Wrap selection with Open/Close tag
+- Url encode/decode selection

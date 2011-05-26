@@ -117,8 +117,11 @@ void commandMenuInit()
     W_key->_key        = 0x57; // W
     setCommand(6, TEXT("Wrap selection with tag"), wrap_with_tag, W_key, false);
 
-    setCommand(8, TEXT("Features"), show_features, NULL, false);
-    setCommand(9, TEXT("About"), show_about, NULL, false);
+    setCommand(8, TEXT("URLencode selection"), url_encode_selection, NULL, false);
+    setCommand(9, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
+
+    setCommand(11, TEXT("Features"), show_features, NULL, false);
+    setCommand(12, TEXT("About"), show_about, NULL, false);
 }
 
 //
@@ -711,6 +714,113 @@ void wrap_with_tag()
 
     ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
+
+void url_encode_selection()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+    int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    if (selection_start != selection_end)
+    {
+        ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+        char selection[9999];
+        ::SendMessage(curScintilla, SCI_GETSELTEXT , 0, (LPARAM)selection);
+        ::SendMessage(curScintilla, SCI_DELETEBACK , 0, 0);
+
+        char *encoded = url_encode(selection);
+
+        ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_start, (LPARAM)encoded);
+        
+        ::SendMessage(curScintilla, SCI_SETSEL , selection_start + strlen(encoded), selection_start + strlen(encoded));
+        free(encoded);
+        
+        ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+    }
+}
+
+void url_decode_selection()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+    int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    if (selection_start != selection_end)
+    {
+        ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+        char selection[9999];
+        ::SendMessage(curScintilla, SCI_GETSELTEXT , 0, (LPARAM)selection);
+        ::SendMessage(curScintilla, SCI_DELETEBACK , 0, 0);
+
+        char *encoded = url_decode(selection);
+
+        ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_start, (LPARAM)encoded);
+        
+        ::SendMessage(curScintilla, SCI_SETSEL , selection_start + strlen(encoded), selection_start + strlen(encoded));
+        free(encoded);
+
+        ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+    }
+}
+
+/**
+ * Url encode/decode functions from http://www.geekhideout.com/urlcode.shtml
+ * Why reinvent the wheel?
+ */
+
+/* Converts a hex character to its integer value */
+char from_hex(char ch) {
+  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+/* Converts an integer value to its hex character*/
+char to_hex(char code) {
+  static char hex[] = "0123456789abcdef";
+  return hex[code & 15];
+}
+
+/* Returns a url-encoded version of str */
+/* IMPORTANT: be sure to free() the returned string after use */
+char *url_encode(char *str) {
+  char *pstr = str, *buf = (char *) malloc(strlen(str) * 3 + 1), *pbuf = buf;
+  while (*pstr) {
+    if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') 
+      *pbuf++ = *pstr;
+    else if (*pstr == ' ') 
+      *pbuf++ = '+';
+    else 
+      *pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+    pstr++;
+  }
+  *pbuf = '\0';
+  return buf;
+}
+
+/* Returns a url-decoded version of str */
+/* IMPORTANT: be sure to free() the returned string after use */
+char *url_decode(char *str) {
+  char *pstr = str, *buf = (char *) malloc(strlen(str) + 1), *pbuf = buf;
+  while (*pstr) {
+    if (*pstr == '%') {
+      if (pstr[1] && pstr[2]) {
+        *pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+        pstr += 2;
+      }
+    } else if (*pstr == '+') { 
+      *pbuf++ = ' ';
+    } else {
+      *pbuf++ = *pstr;
+    }
+    pstr++;
+  }
+  *pbuf = '\0';
+  return buf;
+}
+
 
 /**
  * HELPER FUNCTIONS

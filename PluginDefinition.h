@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 10;
+const int nbFunc = 13;
 
 
 //
@@ -98,6 +98,14 @@ void closed_file_list();
 void insertList();
 
 void wrap_with_tag();
+
+// Url encode/decode selection
+void url_encode_selection();
+void url_decode_selection();
+char from_hex(char ch);
+char to_hex(char code);
+char *url_encode(char *str);
+char *url_decode(char *str);
 
 // Heper functions
 HWND getCurrentScintilla();

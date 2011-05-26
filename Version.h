@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "0.7"
-#define VERSION_NUM 0,7
+#define VERSION_TEXT "0.9"
+#define VERSION_NUM 0,9
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -12,6 +12,7 @@ Features implemented so far:\r\n\r\n\
 - Undo closed tab\r\n\
 - Switching tabs with ALT + LEFT/RIGHT\r\n\
 - Wrap selection with Open/Close tag\r\n\
+- Url encode/decode selection\r\n\
 ")
 
 #define ABOUT TEXT("\
