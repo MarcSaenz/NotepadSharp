@@ -11,6 +11,7 @@ Features implemented so far:\r\n\r\n\
 - Delete current line keeping the column\r\n\
 - Undo closed tab\r\n\
 - Switching tabs with ALT + LEFT/RIGHT\r\n\
+- Wrap selection with Open/Close tag\r\n\
 ")
 
 #define ABOUT TEXT("\

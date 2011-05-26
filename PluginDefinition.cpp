@@ -110,8 +110,15 @@ void commandMenuInit()
     RIGHT_key->_key        = VK_RIGHT ; // RIGHT
     setCommand(4, TEXT("Tab right"), buffer_right, RIGHT_key, false);
 
-    setCommand(6, TEXT("Features"), show_features, NULL, false);
-    setCommand(7, TEXT("About"), show_about, NULL, false);
+    ShortcutKey *W_key = new ShortcutKey;
+    W_key->_isAlt      = true;
+    W_key->_isCtrl     = true;
+    W_key->_isShift    = false;
+    W_key->_key        = 0x57; // W
+    setCommand(6, TEXT("Wrap selection with tag"), wrap_with_tag, W_key, false);
+
+    setCommand(8, TEXT("Features"), show_features, NULL, false);
+    setCommand(9, TEXT("About"), show_about, NULL, false);
 }
 
 //
@@ -426,11 +433,6 @@ void delete_current_line()
     ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
-/**
- * REMEMEBER TO IMPLEMENT TABNEXT AND TABPREVIOUS
- * WITH ALT+LEFT_ARROW AND ALT+RIGHT_ARROW
- */
-
 char closed_files[300][MAX_PATH] = {};
 int closed_files_index = 0;
 
@@ -690,6 +692,24 @@ void buffer_right()
     //::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)path_text);
     ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
     //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)path_text);
+}
+
+void wrap_with_tag()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+    int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_end, (LPARAM)"</p>");
+    ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_start, (LPARAM)"<p>");
+
+    ::SendMessage(curScintilla, SCI_SETSELECTION, selection_end + 5, selection_end + 6);
+    ::SendMessage(curScintilla, SCI_ADDSELECTION, selection_start + 1, selection_start + 2);
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 /**

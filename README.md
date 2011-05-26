@@ -12,3 +12,4 @@ Implemented so far:
 - Delete current line keeping the column
 - Undo closed tab
 - Switching tabs with ALT + LEFT/RIGHT
+- Wrap selection with Open/Close tag
