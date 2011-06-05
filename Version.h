@@ -13,11 +13,13 @@ Features implemented so far:\r\n\r\n\
 - Switching tabs with ALT + LEFT/RIGHT\r\n\
 - Wrap selection with Open/Close tag\r\n\
 - Url encode/decode selection\r\n\
+- Autoclose embeded script tags for ruby and php (<? | <%)\r\n\
+- Column ruler\
 ")
 
 #define ABOUT TEXT("\
-This plugin implements all the features I wanted to see in Notepad++\r\n\
-for years, hope you will find it useful for you too.\r\n\r\n\
+This plugin implements all the features I wanted to see in Notepad++ for years\r\n\
+\r\n\
 jvdanilo\r\n\
 ")
 

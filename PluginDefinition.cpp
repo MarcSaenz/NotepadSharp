@@ -120,8 +120,15 @@ void commandMenuInit()
     setCommand(8, TEXT("URLencode selection"), url_encode_selection, NULL, false);
     setCommand(9, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
 
-    setCommand(11, TEXT("Features"), show_features, NULL, false);
-    setCommand(12, TEXT("About"), show_about, NULL, false);
+    ShortcutKey *C_key = new ShortcutKey;
+    C_key->_isAlt      = false;
+    C_key->_isCtrl     = true;
+    C_key->_isShift    = true;
+    C_key->_key        = 0x43; // C
+    setCommand(11, TEXT("Column ruler"), ruler, C_key, false);
+
+    setCommand(13, TEXT("Features"), show_features, NULL, false);
+    setCommand(14, TEXT("About"), show_about, NULL, false);
 }
 
 //
@@ -819,6 +826,101 @@ char *url_decode(char *str) {
   }
   *pbuf = '\0';
   return buf;
+}
+
+
+void EMBED_code()
+{
+    HWND curScintilla = getCurrentScintilla();
+    TCHAR full_file_path[MAX_PATH];
+    char path_text[MAX_PATH];
+
+    int current_buffer = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    
+    ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, current_buffer, (LPARAM)full_file_path);
+
+    WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
+
+    if (strstr(path_text, ".erb"))
+    {
+        int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos - 3);
+
+        char check[4];
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&check);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos );
+
+        if (strstr(check, "<% "))
+        {
+            ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+            ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)" %>");
+            ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        }
+        else if (strstr(check, "<%="))
+        {
+            ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+            ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"  %>");
+            ::SendMessage(curScintilla, SCI_SETSEL, pos + 1, pos + 1 );
+            ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        }
+    }
+    else if (strstr(path_text, ".php")
+          || strstr(path_text, ".html"))
+    {
+        int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        
+        char check[4];
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos - 3);
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&check);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos );
+
+        if (strstr(check, "<? "))
+        {
+            ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+            ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)" ?>");
+            ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        }
+        else if (strstr(check, "<?="))
+        {
+            ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+            ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"  ?>");
+            ::SendMessage(curScintilla, SCI_SETSEL, pos + 1, pos + 1 );
+            ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        }
+    }
+}
+
+int ruler_check = 0;
+
+void ruler()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    if (ruler_check == 0)
+    {
+        int position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
+
+        ::SendMessage(curScintilla, SCI_ANNOTATIONSETTEXT, line_number, (LPARAM)"--- 0 ---|--- 10---|--- 20---|--- 30---|--- 40---|--- 50---|--- 60---|--- 70---|--- 80---|--- 90---|\n\
+123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|");
+        /**
+         * #define STYLE_DEFAULT 32
+         * #define STYLE_LINENUMBER 33
+         * #define STYLE_BRACELIGHT 34
+         * #define STYLE_BRACEBAD 35
+         * #define STYLE_CONTROLCHAR 36
+         * #define STYLE_INDENTGUIDE 37
+         * #define STYLE_CALLTIP 38
+         */
+        ::SendMessage(curScintilla, SCI_ANNOTATIONSETSTYLE, line_number, STYLE_CALLTIP);
+        ::SendMessage(curScintilla, SCI_ANNOTATIONSETVISIBLE, line_number, 0);
+        ruler_check = 1;
+    }
+    else
+    {
+        ::SendMessage(curScintilla, SCI_ANNOTATIONCLEARALL, 0, 0);
+        ruler_check = 0;
+    }
 }
 
 

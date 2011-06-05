@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 13;
+const int nbFunc = 15;
 
 
 //
@@ -106,6 +106,11 @@ char from_hex(char ch);
 char to_hex(char code);
 char *url_encode(char *str);
 char *url_decode(char *str);
+
+// Helpers for embeded code like php and ruby
+void EMBED_code();
+
+void ruler();
 
 // Heper functions
 HWND getCurrentScintilla();

@@ -14,3 +14,5 @@ Implemented so far:
 - Switching tabs with ALT + LEFT/RIGHT
 - Wrap selection with Open/Close tag
 - Url encode/decode selection
+- Autoclose embeded script tags for ruby and php (<% | <?)
+- Column ruler

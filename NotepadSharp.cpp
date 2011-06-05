@@ -81,6 +81,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             {
                 curly_brace = 1;
             }
+            else if (notifyCode->ch == _TCH(' ') || notifyCode->ch == _TCH('='))
+            {
+                EMBED_code();
+            }
         break;
         /*
         case SCN_MODIFIED:
@@ -99,6 +103,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
                 indentEndingCurlyBrace();
                 curly_brace = 0;
             }
+
             break;
         case NPPN_FILEBEFORECLOSE :
             get_all_files();
