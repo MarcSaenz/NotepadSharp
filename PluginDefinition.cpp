@@ -421,6 +421,7 @@ void end_tag()
 
         if (end == last_search)
         {
+            ::SendMessage(curScintilla, SCI_SETSEL, end, end);
             break;
         }
         last_search = end;
@@ -439,15 +440,24 @@ void end_tag()
     }
     while (i);
 
-    // FIX PROBLEM WITH LAST TAG REPEATION
+    // FIXES PROBLEM WITH LAST TAG REPEATION
+    int tag_selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONNSTART, 0, 0);
+    int tag_selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
 
-    char tag[30];
-    create_ending_tag(tag);
+    if ( tag_selection_start != tag_selection_end )
+    {
+        char tag[30];
+        create_ending_tag(tag);
 
-    int taglen = strlen(tag);
+        int taglen = strlen(tag);
 
-    ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM)tag );
-    ::SendMessage(curScintilla, SCI_SETSEL, save_position + taglen, save_position + taglen);
+        ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM)tag );
+        ::SendMessage(curScintilla, SCI_SETSEL, save_position + taglen, save_position + taglen);
+    }
+    else
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL, save_position , save_position );
+    }
 }
 
 void delete_current_line()

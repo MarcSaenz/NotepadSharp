@@ -1,4 +1,4 @@
-Notepad# (current version 0.9.2)
+Notepad# (current version 0.9.3)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
