@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 15;
+const int nbFunc = 16;
 
 
 //
@@ -82,6 +82,10 @@ void cStyleComment(HWND &curScintilla, char *line);
 void indentAfterCurlyBrace(HWND &curScintilla, int line_number);
 void indentEndingCurlyBrace();
 
+// XML/HTML tags indentation
+char* create_ending_tag(char *tag);
+void XHTMLindent(HWND &curScintilla, int position, int line_number);
+
 void delete_current_line();
 
 // Switching buffers
@@ -98,6 +102,7 @@ void closed_file_list();
 void insertList();
 
 void wrap_with_tag();
+void end_tag();
 
 // Url encode/decode selection
 void url_encode_selection();

@@ -61,15 +61,6 @@ void commandMenuInit()
     //            );
 
 
-
-    ShortcutKey *period = new ShortcutKey;
-    period->_isAlt      = false;
-    period->_isCtrl     = true;
-    period->_isShift    = false;
-    period->_key        = 0xBE;
-    //setCommand(0, TEXT("End last tag"), end_last_tag, period, false);
-    //VK_OEM_PERIOD 	0xBE 	"." any country/region
-
     /**
      * Delete current line on CTRL+SHIFT+D
      */
@@ -86,7 +77,7 @@ void commandMenuInit()
     T_key->_isCtrl     = true;
     T_key->_isShift    = true;
     T_key->_key        = 0x54; // T
-    setCommand(1, TEXT("Undo closed tab"), undo_closed_tab, T_key, false);
+    setCommand(1, TEXT("Undo close tab"), undo_closed_tab, T_key, false);
 
     ShortcutKey *I_key = new ShortcutKey;
     I_key->_isAlt      = false;
@@ -117,18 +108,26 @@ void commandMenuInit()
     W_key->_key        = 0x57; // W
     setCommand(6, TEXT("Wrap selection with tag"), wrap_with_tag, W_key, false);
 
-    setCommand(8, TEXT("URLencode selection"), url_encode_selection, NULL, false);
-    setCommand(9, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
+    ShortcutKey *period = new ShortcutKey;
+    period->_isAlt      = false;
+    period->_isCtrl     = true;
+    period->_isShift    = false;
+    period->_key        = 0xBE;// VK_OEM_PERIOD  0xBE  "." any country/region
+    setCommand(7, TEXT("End last tag"), end_tag, period, false);
+
+    setCommand(9, TEXT("URLencode selection"), url_encode_selection, NULL, false);
+    setCommand(10, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
 
     ShortcutKey *C_key = new ShortcutKey;
     C_key->_isAlt      = false;
     C_key->_isCtrl     = true;
     C_key->_isShift    = true;
     C_key->_key        = 0x43; // C
-    setCommand(11, TEXT("Column ruler"), ruler, C_key, false);
+    setCommand(12, TEXT("Column ruler"), ruler, C_key, false);
 
-    setCommand(13, TEXT("Features"), show_features, NULL, false);
-    setCommand(14, TEXT("About"), show_about, NULL, false);
+    setCommand(14, TEXT("Features"), show_features, NULL, false);
+    setCommand(15, TEXT("About"), show_about, NULL, false);
+
 }
 
 //
@@ -172,7 +171,6 @@ void show_about()
     ::MessageBox(nppData._nppHandle, ABOUT, TEXT("Notepad#"), MB_OK);
 }
 
-
 void Newline()
 {
     HWND curScintilla = getCurrentScintilla();
@@ -210,6 +208,10 @@ void Newline()
 
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
+        case L_HTML:
+        case L_XML:
+            XHTMLindent(curScintilla, position, line_number - 1);
+            break;
         case L_RUBY:
             poundComment(curScintilla, line);
             break;
@@ -243,11 +245,9 @@ void indentAfterCurlyBrace(HWND &curScintilla, int line_number)
         {
             ::SendMessage(curScintilla, SCI_NEWLINE , 0, 0 );
             ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
-            ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
         }
-        else {
-            ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
-        }
+
+        ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
     }
 }
 
@@ -337,6 +337,43 @@ void cStyleComment(HWND &curScintilla, char *line)
 
 }
 
+void XHTMLindent(HWND &curScintilla, int position, int line_number)
+{
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
+
+    int selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+    
+    char tag[30];
+    create_ending_tag(tag);
+
+    int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
+
+    if (selection_end == line_end)
+    {
+        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+        ::SendMessage(curScintilla, SCI_SEARCHNEXT, 0, (LPARAM)tag);
+
+        int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+
+        if (selection_start == position)
+        {
+            ::SendMessage(curScintilla, SCI_NEWLINE , 0, 0 );
+            ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+        }
+
+        ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
+    }
+    else {
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+    }
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+}
+
 char* create_ending_tag(char *tag)
 {
     HWND curScintilla = getCurrentScintilla();
@@ -361,65 +398,57 @@ char* create_ending_tag(char *tag)
     return tag;
 }
 
-void end_last_tag()
+void end_tag()
 {
     HWND curScintilla = getCurrentScintilla();
 
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    
+    int end = 0;
+    char selection[9999];
 
-    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
+    int last_search = 0;
 
-    int search_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int i = 1;
+
+    do {
+        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+        // FIND BETTER REGEX THAT COULD INCLUDE: ?
+        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^!\\%\\?]+?>");
+
+        end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+
+        if (end == last_search)
+        {
+            break;
+        }
+        last_search = end;
+
+        if (selection[1] == '/')
+        {
+            i++;
+        }
+        else if (selection[strlen(selection) - 2] == '/')
+        {
+            continue;
+        }
+        else {
+            i--;
+        }
+    }
+    while (i);
+
+    // FIX PROBLEM WITH LAST TAG REPEATION
 
     char tag[30];
     create_ending_tag(tag);
 
-    char span[99999];
-    ::SendMessage(curScintilla, SCI_SETSEL, save_position, search_position);
-    ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&span);
-
-
-    int count = 1;
-
-    int position = search_position + 1;
-
-    ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
-
-    if (strstr(span, tag))
-    {
-        while (position < save_position && position > search_position)
-        {
-            ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-            ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<\\/[^\\?\\/%]+?>");
-            position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-
-            if (position > search_position)
-            {
-                count++;
-            }
-            //break;
-        }
-    }
-
-    ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
-    while(count)
-    {
-        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
-        int search_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-        count--;
-    }
- 
-    create_ending_tag(tag);
-
-
-    ::SendMessage(curScintilla, SCI_INSERTTEXT , save_position, (LPARAM)tag );
-    
     int taglen = strlen(tag);
+
+    ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM)tag );
     ::SendMessage(curScintilla, SCI_SETSEL, save_position + taglen, save_position + taglen);
 }
-
 
 void delete_current_line()
 {
@@ -841,12 +870,21 @@ void EMBED_code()
 
     WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
 
+
     if (strstr(path_text, ".erb"))
     {
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos - 3);
+
+        char line[9999];
+        ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)line);
+
+        if (strstr(line, "%>"))
+        {
+            return;
+        }
 
         char check[4];
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos - 3);
         ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&check);
         ::SendMessage(curScintilla, SCI_SETSEL, pos, pos );
 
@@ -868,6 +906,14 @@ void EMBED_code()
           || strstr(path_text, ".html"))
     {
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        
+        char line[9999];
+        ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)line);
+
+        if (strstr(line, "?>"))
+        {
+            return;
+        }
         
         char check[4];
         ::SendMessage(curScintilla, SCI_SETSEL, pos, pos - 3);
@@ -901,8 +947,8 @@ void ruler()
         int position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
-        ::SendMessage(curScintilla, SCI_ANNOTATIONSETTEXT, line_number, (LPARAM)"--- 0 ---|--- 10---|--- 20---|--- 30---|--- 40---|--- 50---|--- 60---|--- 70---|--- 80---|--- 90---|\n\
-123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|");
+        ::SendMessage(curScintilla, SCI_ANNOTATIONSETTEXT, line_number, (LPARAM)"--- 0 ---|--- 10---|--- 20---|--- 30---|--- 40---|--- 50---|--- 60---|--- 70---|--- 80---|--- 90---|---100---|---110---|---120---|---130---|---140---|---150---|---160---|---170---|---180---|---190---|\n\
+123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|123456789|");
         /**
          * #define STYLE_DEFAULT 32
          * #define STYLE_LINENUMBER 33
