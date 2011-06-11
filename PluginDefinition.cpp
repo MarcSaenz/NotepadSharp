@@ -113,7 +113,7 @@ void commandMenuInit()
     period->_isCtrl     = true;
     period->_isShift    = false;
     period->_key        = 0xBE;// VK_OEM_PERIOD  0xBE  "." any country/region
-    setCommand(7, TEXT("End last tag"), end_tag, period, false);
+    setCommand(7, TEXT("Close last open tag"), end_tag, period, false);
 
     setCommand(9, TEXT("URLencode selection"), url_encode_selection, NULL, false);
     setCommand(10, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
@@ -402,7 +402,19 @@ void end_tag()
 {
     HWND curScintilla = getCurrentScintilla();
 
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
+
+    char line[9999];
+
+    ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)&line);
+
+    int trim_line = strlen(trim(line));
+
+    int matching_tag_indentation;
+    int tag_line;
     
     int end = 0;
     char selection[9999];
@@ -411,10 +423,12 @@ void end_tag()
 
     int i = 1;
 
+    char not_allowed[] = "!?%/";
+
     do {
         ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-        // FIND BETTER REGEX THAT COULD INCLUDE: ?
-        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^!\\%\\?]+?>");
+
+        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
 
         end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
         ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
@@ -429,6 +443,10 @@ void end_tag()
         if (selection[1] == '/')
         {
             i++;
+        }
+        else if (strstr(not_allowed, substr(selection, 1,1)))
+        {
+            continue;
         }
         else if (selection[strlen(selection) - 2] == '/')
         {
@@ -451,13 +469,26 @@ void end_tag()
 
         int taglen = strlen(tag);
 
+        if (trim_line < 1)
+        {
+            tag_line = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, tag_selection_start, 0);
+            matching_tag_indentation = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, tag_line, 0);
+        }
+
         ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM)tag );
         ::SendMessage(curScintilla, SCI_SETSEL, save_position + taglen, save_position + taglen);
+
+        if (trim_line < 1)
+        {
+            ::SendMessage(curScintilla, SCI_SETLINEINDENTATION, save_line, matching_tag_indentation);
+        }
     }
     else
     {
         ::SendMessage(curScintilla, SCI_SETSEL, save_position , save_position );
     }
+    
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 void delete_current_line()
