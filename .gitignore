@@ -4,3 +4,5 @@ Unicode Debug/*
 bin/*
 ipch/*
 *.opensdf
+*.sdf
+
