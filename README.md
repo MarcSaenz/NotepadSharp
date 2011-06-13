@@ -1,4 +1,4 @@
-Notepad# (current version 0.9.4)
+Notepad# (current version 0.9.6)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
@@ -17,5 +17,5 @@ Implemented so far:
 - Url encode/decode selection
 - Autoclose embeded script tags for ruby and php (<% | <?)
 - Column ruler
-- Indent after opened tag - XML and HTML
+- Indent after opened tag - XML, HTML and PHP
 - Close last open tag

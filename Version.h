@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "0.9.4"
-#define VERSION_NUM 0,9,4
+#define VERSION_TEXT "0.9.6"
+#define VERSION_NUM 0,9,6
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -15,7 +15,7 @@ Features implemented so far:\r\n\r\n\
 - Url encode/decode selection\r\n\
 - Autoclose embeded script tags for Ruby and PHP (<? | <%)\r\n\
 - Column ruler\r\n\
-- Indent after opened tag - XML and HTML\r\n\
+- Indent after opened tag - XML, HTML and PHP\r\n\
 - Close last open tag\
 ")
 

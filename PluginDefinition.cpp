@@ -207,6 +207,7 @@ void Newline()
             poundComment(curScintilla, line);
 
             indentAfterCurlyBrace(curScintilla, line_number - 1);
+            XHTMLindent(curScintilla, position, line_number - 1);
             break;
         case L_HTML:
         case L_XML:
@@ -342,10 +343,35 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
     ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
+    //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
+    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
+
+    // PROBLEM
+    // <li <?= ($segment == 'kalk') ? "class=\"current\"" : '' ?>>
+
+    char selection[9999];
+    ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+
+    char not_allowed[] = "!?%/";
+
+    if (selection[1] == '/')
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+        return;
+    }
+    else if (strstr(not_allowed, substr(selection, 1,1)))
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+        return;
+    }
+    else if (selection[strlen(selection) - 2] == '/')
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+        return;
+    }
 
     int selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
-    
+
     char tag[30];
     create_ending_tag(tag);
 
@@ -914,11 +940,16 @@ void EMBED_code()
 
     if (strstr(path_text, ".erb"))
     {
-        int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        int pos         = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, pos, 0);
 
         char line[9999];
-        ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)line);
 
+        int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, line_end);
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&line);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos);
+        
         if (strstr(line, "%>"))
         {
             return;
@@ -946,10 +977,15 @@ void EMBED_code()
     else if (strstr(path_text, ".php")
           || strstr(path_text, ".html"))
     {
-        int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-        
+        int pos         = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+        int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, pos, 0);
+
         char line[9999];
-        ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)line);
+
+        int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, line_end);
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&line);
+        ::SendMessage(curScintilla, SCI_SETSEL, pos, pos);
 
         if (strstr(line, "?>"))
         {
