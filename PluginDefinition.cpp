@@ -340,37 +340,28 @@ void cStyleComment(HWND &curScintilla, char *line)
 
 void XHTMLindent(HWND &curScintilla, int position, int line_number)
 {
-    //::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
-
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^\\?\\/%]+?>");
-    //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
-
-    // PROBLEM
-    // <li <?= ($segment == 'kalk') ? "class=\"current\"" : '' ?>>
-
-    // <[^?][^\/]+>$
     ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^?][^\\/]+>$");
 
     char selection[9999];
     ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
     int selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
 
-    //char selection_2[9999];
-    //::SendMessage(curScintilla, SCI_SETSEL, position, position);
-    //::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
-    //::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection_2);
-    //int selection_2_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+    int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
+
+    // FALBACK TO SIMPLE REGEX
+    if (selection_end != line_end)
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
+        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+        selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+    }
 
     char not_allowed[] = "!?%/";
 
-    if (selection[1] == '/')
-    {
-        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
-        return;
-    }
-    else if (strstr(not_allowed, substr(selection, 1,1)))
+    if (strstr(not_allowed, substr(selection, 1,1)))
     {
         ::SendMessage(curScintilla, SCI_SETSEL, position, position);
         return;
@@ -384,10 +375,7 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
     char tag[30];
     create_ending_tag(tag);
 
-    int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
-
-    if (selection_end == line_end
-     /*|| selection_2_end == line_end*/)
+    if (selection_end == line_end)
     {
         ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
         ::SendMessage(curScintilla, SCI_SEARCHNEXT, 0, (LPARAM)tag);
@@ -407,7 +395,6 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
         ::SendMessage(curScintilla, SCI_SETSEL, position, position);
     }
 
-    //::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 char* create_ending_tag(char *tag)
