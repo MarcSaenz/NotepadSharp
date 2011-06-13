@@ -203,11 +203,12 @@ void Newline()
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
         case L_PHP:
-            cStyleComment(curScintilla, line);
-            poundComment(curScintilla, line);
-
-            indentAfterCurlyBrace(curScintilla, line_number - 1);
-            XHTMLindent(curScintilla, position, line_number - 1);
+            if ( cStyleComment(curScintilla, line) == 0
+              && poundComment(curScintilla, line) == 0
+              && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
+            {
+                XHTMLindent(curScintilla, position, line_number - 1);
+            }
             break;
         case L_HTML:
         case L_XML:
@@ -221,8 +222,10 @@ void Newline()
     ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
-void indentAfterCurlyBrace(HWND &curScintilla, int line_number)
+int indentAfterCurlyBrace(HWND &curScintilla, int line_number)
 {
+    int ret = 0;
+
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
 
     char selection[9999];
@@ -242,6 +245,7 @@ void indentAfterCurlyBrace(HWND &curScintilla, int line_number)
 
     if (strstr(lastchar, "{"))
     {
+        ret = 1;
         if (strstr(nextchar, "}"))
         {
             ::SendMessage(curScintilla, SCI_NEWLINE , 0, 0 );
@@ -250,6 +254,7 @@ void indentAfterCurlyBrace(HWND &curScintilla, int line_number)
 
         ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
     }
+    return ret;
 }
 
 void indentEndingCurlyBrace()
@@ -298,26 +303,31 @@ void indentEndingCurlyBrace()
     ::SendMessage(curScintilla, SCI_SETLINEINDENTATION, save_line, brace_indent);
 }
 
-void poundComment(HWND &curScintilla, char *line)
+int poundComment(HWND &curScintilla, char *line)
 {
+    int ret = 0;
     char comment[2];
     strncpy(comment, line, 2);
     if (strstr(comment, "# "))
     {
+        ret = 1;
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"# " );
         int next = pos + 2;
         ::SendMessage(curScintilla, SCI_SETSEL, next, next);
     }
+    return ret;
 }
 
-void cStyleComment(HWND &curScintilla, char *line)
+int cStyleComment(HWND &curScintilla, char *line)
 {
+    int ret = 0;
     char comment[2];
     strncpy(comment, line, 2);
     
     if (strstr(comment,"* "))
     {
+        ret = 1;
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"* " );
         int next = pos + 2;
@@ -325,6 +335,7 @@ void cStyleComment(HWND &curScintilla, char *line)
     }
     else if (strstr(comment, "/*"))
     {
+        ret = 2;
         int pos = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)" * " );
         int next = pos + 3;
@@ -332,10 +343,11 @@ void cStyleComment(HWND &curScintilla, char *line)
     }
     else if (strstr(comment, "*/"))
     {
+        ret = 3;
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
     }
-
+    return ret;
 }
 
 void XHTMLindent(HWND &curScintilla, int position, int line_number)

@@ -75,11 +75,11 @@ void show_about();
 
 // Commenting helpers
 void Newline();
-void poundComment(HWND &curScintilla, char *line);
-void cStyleComment(HWND &curScintilla, char *line);
+int poundComment(HWND &curScintilla, char *line);
+int cStyleComment(HWND &curScintilla, char *line);
 
 // Cyrly brace indentation
-void indentAfterCurlyBrace(HWND &curScintilla, int line_number);
+int indentAfterCurlyBrace(HWND &curScintilla, int line_number);
 void indentEndingCurlyBrace();
 
 // XML/HTML tags indentation
