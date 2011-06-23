@@ -16,7 +16,6 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "PluginDefinition.h"
-#define _TCH(x)  (x)
 
 #define SC_UPDATE_SELECTION 0x2
 
@@ -70,27 +69,22 @@ int curly_brace;
 
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
-	switch (notifyCode->nmhdr.code) 
-	{
+    switch (notifyCode->nmhdr.code) 
+    {
         case SCN_CHARADDED:
-            if (notifyCode->ch == _TCH('\n') || notifyCode->ch == _TCH('\r'))
+            if (notifyCode->ch == '\n' || notifyCode->ch == '\r')
             {
                 fire_enter = 1;
             }
-            else if (notifyCode->ch == _TCH('}'))
+            else if (notifyCode->ch == '}')
             {
                 curly_brace = 1;
             }
-            else if (notifyCode->ch == _TCH(' ') || notifyCode->ch == _TCH('='))
+            else if (notifyCode->ch == ' ' || notifyCode->ch == '=')
             {
                 EMBED_code();
             }
-        break;
-        /*
-        case SCN_MODIFIED:
-  
             break;
-        */
         case SCN_UPDATEUI:
             if (SC_PERFORMED_USER && fire_enter)
             {

@@ -117,6 +117,8 @@ void EMBED_code();
 
 void ruler();
 
+int auto_numbering();
+
 // Heper functions
 HWND getCurrentScintilla();
 char* getEOL();

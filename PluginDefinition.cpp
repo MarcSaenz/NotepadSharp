@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+#include "stdio.h"
 #include "tchar.h"
 #include "PluginDefinition.h"
 #include "menuCmdID.h"
@@ -186,8 +187,6 @@ void Newline()
     
     trim_left(line);
 
-    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
-
     switch (lang)
     {
         case L_C:
@@ -199,8 +198,11 @@ void Newline()
             cStyleComment(curScintilla, line);
             break;
         case L_JS:
-            cStyleComment(curScintilla, line);
-            indentAfterCurlyBrace(curScintilla, line_number - 1);
+            if (cStyleComment(curScintilla, line) == 0
+             && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
+            {
+
+            }
             break;
         case L_PHP:
             if ( cStyleComment(curScintilla, line) == 0
@@ -217,13 +219,16 @@ void Newline()
         case L_RUBY:
             poundComment(curScintilla, line);
             break;
+        case L_TXT:
+            auto_numbering();
+            break;
     }
-
-    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 int indentAfterCurlyBrace(HWND &curScintilla, int line_number)
 {
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
     int ret = 0;
 
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
@@ -254,6 +259,9 @@ int indentAfterCurlyBrace(HWND &curScintilla, int line_number)
 
         ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
     }
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+
     return ret;
 }
 
@@ -271,6 +279,7 @@ void indentEndingCurlyBrace()
     }
 
     HWND curScintilla = getCurrentScintilla();
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
@@ -301,6 +310,8 @@ void indentEndingCurlyBrace()
     ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
     // SET THE MATCHING BRACE INDENTATION
     ::SendMessage(curScintilla, SCI_SETLINEINDENTATION, save_line, brace_indent);
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 int poundComment(HWND &curScintilla, char *line)
@@ -310,11 +321,17 @@ int poundComment(HWND &curScintilla, char *line)
     strncpy(comment, line, 2);
     if (strstr(comment, "# "))
     {
+        ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
         ret = 1;
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"# " );
         int next = pos + 2;
         ::SendMessage(curScintilla, SCI_SETSEL, next, next);
+        
+        ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        
+        auto_numbering();
     }
     return ret;
 }
@@ -325,26 +342,35 @@ int cStyleComment(HWND &curScintilla, char *line)
     char comment[2];
     strncpy(comment, line, 2);
     
-    if (strstr(comment,"* "))
+    if (strstr(comment,"* ") && ! strstr(line, "*/") )
     {
+        ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
         ret = 1;
         int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"* " );
         int next = pos + 2;
         ::SendMessage(curScintilla, SCI_SETSEL, next, next);
+
+        ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        auto_numbering();
     }
-    else if (strstr(comment, "/*"))
+    else if (strstr(comment, "/*") && ! strstr(line, "*/") )
     {
+        ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
         ret = 2;
         int pos = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)" * " );
         int next = pos + 3;
-        ::SendMessage(curScintilla, SCI_SETSEL, next, next);   
+        ::SendMessage(curScintilla, SCI_SETSEL, next, next);
+
+        ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+        auto_numbering();
     }
     else if (strstr(comment, "*/"))
     {
         ret = 3;
-        int pos  = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
         ::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
     }
     return ret;
@@ -352,8 +378,10 @@ int cStyleComment(HWND &curScintilla, char *line)
 
 void XHTMLindent(HWND &curScintilla, int position, int line_number)
 {
+
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^?][^\\/]+>$");
+    //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^?][^\\/]+>$");
+    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\/]+[\\w\\W\\b\\B]+?>\\s*$");
 
     char selection[9999];
     ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
@@ -361,15 +389,15 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
 
     int line_end = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line_number, 0);
 
-    // FALBACK TO SIMPLE REGEX
-    if (selection_end != line_end)
-    {
-        ::SendMessage(curScintilla, SCI_SETSEL, position, position);
-        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
-        ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
-        selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
-    }
+    // FALLBACK TO SIMPLE REGEX
+    //if (selection_end != line_end)
+    //{
+    //    ::SendMessage(curScintilla, SCI_SETSEL, position, position);
+    //    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+    //    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
+    //    ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+    //    selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+    //}
 
     char not_allowed[] = "!?%/";
 
@@ -383,6 +411,8 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
         ::SendMessage(curScintilla, SCI_SETSEL, position, position);
         return;
     }
+    
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     char tag[30];
     create_ending_tag(tag);
@@ -407,6 +437,7 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
         ::SendMessage(curScintilla, SCI_SETSEL, position, position);
     }
 
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 char* create_ending_tag(char *tag)
@@ -463,7 +494,11 @@ void end_tag()
     do {
         ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
 
-        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
+        //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\W\\b\\B]+?>");
+        /**
+         * Scintillas regex engine is not very friendly
+         */
+        ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\/][\\w\\W\\b\\B]*?>");
 
         end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
         ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
@@ -1053,6 +1088,112 @@ void ruler()
         ::SendMessage(curScintilla, SCI_ANNOTATIONCLEARALL, 0, 0);
         ruler_check = 0;
     }
+}
+
+int auto_numbering()
+{
+    HWND curScintilla = getCurrentScintilla();
+    
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+    int ret = 0;
+
+    int save_position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int save_line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
+    
+    /**
+     * The /^[\s\#\*]*[0-9]+[.]/ regex does not match good when using SEARCHPREV
+     * so we're using SEARCHNEXT from line start position
+     */
+    int line_start       = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, save_line_number - 1, 0);
+    ::SendMessage(curScintilla, SCI_SETSEL , line_start , line_start);
+
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+    ::SendMessage(curScintilla, SCI_SEARCHNEXT , SCFIND_REGEXP, (LPARAM)"^[\\s\\#\\*]*[0-9]+[.]");
+
+    int search_position_start = ::SendMessage(curScintilla, SCI_GETSELECTIONNSTART, 0, 0);
+    int search_position_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND , 0, 0);
+
+    if (search_position_start != search_position_end)
+    {
+        int search_line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, search_position_start, 0);
+
+        if ((save_line_number - 1) == search_line_number)
+        {
+            ret = 1;
+
+            char selection[9999];
+            ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+
+            trim(selection);
+
+            int last = strlen(selection);
+
+            // FIND LAST SPACE
+            while(last)
+            { 
+                if (isspace(selection[last])) { last++; break; }
+                else { last--; }
+            }
+
+            // FIND FIRST SPACE
+            int first = 0;
+            int slen = strlen(selection);
+            while (first < slen)
+            {
+                if (isspace(selection[first])) break;
+                else first++;
+            }
+
+            char *only_number = substr(selection, last , slen - 2);
+
+            int num = 1;
+            sscanf(only_number, "%d", &num);
+
+            num++;            
+            char buff[100];
+            sprintf(buff, "%d", num);
+            strcat(buff, ". ");
+
+            ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM) buff );
+            
+            int new_position = save_position + strlen(buff);
+            
+            if (strstr(selection, "#") || strstr(selection, "*"))
+            {
+                first++;
+                
+                //char trace[100];
+                //sprintf(trace, "%d|%s|%d", first, selection, last);
+                //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) trace );
+
+                if (first < last )
+                {
+                    last--;
+
+                    char *white_space = substr(selection, first , last );
+                    ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM) white_space );
+                    new_position = new_position + strlen(white_space);
+                }
+            }
+            
+
+            ::SendMessage(curScintilla, SCI_SETSEL, new_position, new_position);
+        }
+        else
+        {
+            ret = 2;
+            ::SendMessage(curScintilla, SCI_SETSEL , save_position, save_position);
+        }
+    }
+    else
+    {
+        ::SendMessage(curScintilla, SCI_SETSEL , save_position, save_position);
+    }
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+
+    return ret;
 }
 
 

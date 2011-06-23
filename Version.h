@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "0.9.7"
-#define VERSION_NUM 0,9,7
+#define VERSION_TEXT "0.9.8"
+#define VERSION_NUM 0,9,8
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -16,7 +16,8 @@ Features implemented so far:\r\n\r\n\
 - Autoclose embeded script tags for Ruby and PHP (<? | <%)\r\n\
 - Column ruler\r\n\
 - Indent after opened tag - XML, HTML and PHP\r\n\
-- Close last open tag\
+- Close last open tag\r\n\
+- Autonumbering inside CommentDoc/DocBock and # comment\
 ")
 
 #define ABOUT TEXT("\

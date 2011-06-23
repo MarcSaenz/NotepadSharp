@@ -1,4 +1,4 @@
-Notepad# (current version 0.9.7)
+Notepad# (current version 0.9.8)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
@@ -19,3 +19,4 @@ Implemented so far:
 - Column ruler
 - Indent after opened tag - XML, HTML and PHP
 - Close last open tag
+- Autonumbering inside CommentDoc/DocBock and # comment
