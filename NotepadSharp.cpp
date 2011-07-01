@@ -84,6 +84,15 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             {
                 EMBED_code();
             }
+            else if (notifyCode->ch == 64)
+            {
+                docblock_keywords();
+            }
+            
+            if (notifyCode->ch == 'd' || notifyCode->ch == 'e' || notifyCode->ch == 'f')
+            {
+                RubyExtra(notifyCode->ch);
+            }
             break;
         case SCN_UPDATEUI:
             if (SC_PERFORMED_USER && fire_enter)

@@ -1,12 +1,12 @@
 
-#define VERSION_TEXT "0.9.8"
-#define VERSION_NUM 0,9,8
+#define VERSION_TEXT "0.9.9"
+#define VERSION_NUM 0,9,9
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
-- Proper new line inside CommentDoc/DocBock for C, C++, Javascript, PHP\r\n\
+- Proper new line inside CommentDoc/DocBlock for C, C++, Javascript, PHP\r\n\
 - Proper new line for # comment in Ruby\r\n\
-- Indent after opening curly brace for C-like languages\r\n\
+- Indent after opening curly brace for C-like languages, CSS\r\n\
   and proper indenting for closing curly brace\r\n\
 - Delete current line keeping the column\r\n\
 - Undo close tab\r\n\
@@ -17,7 +17,10 @@ Features implemented so far:\r\n\r\n\
 - Column ruler\r\n\
 - Indent after opened tag - XML, HTML and PHP\r\n\
 - Close last open tag\r\n\
-- Autonumbering inside CommentDoc/DocBock and # comment\
+- Autonumbering inside CommentDoc/DocBlock and # comment\r\n\
+- Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private\r\n\
+- Match \"end\" indentation for Ruby\r\n\
+- Autocomplete CommentDoc/DocBlock keywords\
 ")
 
 #define ABOUT TEXT("\

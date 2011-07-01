@@ -1,4 +1,4 @@
-Notepad# (current version 0.9.8)
+Notepad# (current version 0.9.9)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
@@ -6,9 +6,9 @@ This plugin implements all the features I wanted to see in Notepad++ for years.
 
 Implemented so far:
 
-- Proper new line inside CommentDoc/DocBock for C, C++, Javascript, PHP
+- Proper new line inside CommentDoc/DocBlock for C, C++, Javascript, PHP
 - Proper new line for # comment in Ruby
-- Indent after opening curly brace for C-like languages
+- Indent after opening curly brace for C-like languages, CSS
   and proper indenting for closing curly brace
 - Delete current line keeping the column
 - Undo closed tab
@@ -19,4 +19,7 @@ Implemented so far:
 - Column ruler
 - Indent after opened tag - XML, HTML and PHP
 - Close last open tag
-- Autonumbering inside CommentDoc/DocBock and # comment
+- Autonumbering inside CommentDoc/DocBlock and # comment
+- Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private
+- Match "end" indentation for Ruby
+- Autocomplete CommentDoc/DocBlock keywords

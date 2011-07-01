@@ -118,6 +118,12 @@ void EMBED_code();
 void ruler();
 
 int auto_numbering();
+void style();
+
+void Ruby_Newline(HWND &curScintilla);
+void RubyExtra(int character);
+
+void docblock_keywords();
 
 // Heper functions
 HWND getCurrentScintilla();
@@ -125,6 +131,5 @@ char* getEOL();
 char* trim_left(char *s);
 char* trim(char *s);
 char* substr(char* string, int begin, int end);
-void getline(char* line);
 
 #endif //PLUGINDEFINITION_H

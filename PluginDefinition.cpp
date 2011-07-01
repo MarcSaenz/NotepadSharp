@@ -129,6 +129,13 @@ void commandMenuInit()
     setCommand(14, TEXT("Features"), show_features, NULL, false);
     setCommand(15, TEXT("About"), show_about, NULL, false);
 
+    //ShortcutKey *ESC_key = new ShortcutKey;
+    //ESC_key->_isAlt      = false;
+    //ESC_key->_isCtrl     = false;
+    //ESC_key->_isShift    = false;
+    //ESC_key->_key        = 0x1B; // ESC
+    //setCommand(16, TEXT("ESC"), style, ESC_key, false);
+
 }
 
 //
@@ -195,7 +202,11 @@ void Newline()
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
         case L_CSS:
-            cStyleComment(curScintilla, line);
+            if (cStyleComment(curScintilla, line) == 0
+             && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
+            {
+
+            }
             break;
         case L_JS:
             if (cStyleComment(curScintilla, line) == 0
@@ -217,7 +228,10 @@ void Newline()
             XHTMLindent(curScintilla, position, line_number - 1);
             break;
         case L_RUBY:
-            poundComment(curScintilla, line);
+            if (poundComment(curScintilla, line) == 0)
+            {
+                Ruby_Newline(curScintilla);
+            }
             break;
         case L_TXT:
             auto_numbering();
@@ -273,13 +287,13 @@ void indentEndingCurlyBrace()
     if (!( lang == L_C
        || lang == L_CPP
        || lang == L_JS
-       || lang == L_PHP))
+       || lang == L_PHP
+       || lang == L_CSS))
     {
         return;
     }
 
     HWND curScintilla = getCurrentScintilla();
-    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
@@ -297,6 +311,8 @@ void indentEndingCurlyBrace()
     {
         return;
     }
+
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     // FIND MATCHING BRACE INDENTATION
     ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_SEARCH_GOTOMATCHINGBRACE);
@@ -328,12 +344,81 @@ int poundComment(HWND &curScintilla, char *line)
         ::SendMessage(curScintilla, SCI_INSERTTEXT, pos, (LPARAM)"# " );
         int next = pos + 2;
         ::SendMessage(curScintilla, SCI_SETSEL, next, next);
-        
+
         ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
-        
+
         auto_numbering();
     }
+
     return ret;
+}
+
+void style()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+
+    ::SendMessage(curScintilla, SCI_SETSEL, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+    ::SendMessage(curScintilla, SCI_SEARCHNEXT, SCFIND_REGEXP, (LPARAM)"@\\w+");
+
+    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+    int selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    //::SendMessage(curScintilla, SCI_STYLESETFONT, 2, (LPARAM) "Times New Roman");
+    //::SendMessage(curScintilla, SCI_STYLESETSIZE, 2, (LPARAM)14);
+    //::SendMessage(curScintilla, SCI_STYLESETITALIC, 2, (LPARAM)true);
+    
+    //::SendMessage(curScintilla, SCI_SETTEXT, 0, (LPARAM)"1270");
+
+    //::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)0xff);
+    //::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)2);
+
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 1);
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 2);
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 1);
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 2);
+
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 2, 1);
+    //::SendMessage(curScintilla, SCI_SETSTYLING, 2, 2);
+
+
+
+
+
+    ::SendMessage(curScintilla, SCI_SETSEL, 0, 0);
+    int len =  selection_end - selection_start;
+
+    //SCI_STYLESETITALIC(int styleNumber, bool italic)
+    ::SendMessage(curScintilla, SCI_STYLESETITALIC, 9999, (LPARAM)true);
+    //SCI_STYLESETBOLD(int styleNumber, bool bold)
+    ::SendMessage(curScintilla, SCI_STYLESETBOLD, 9999, (LPARAM)true);
+    
+    //SCI_STARTSTYLING(int pos, int mask)
+    ::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)31);
+
+    ::SendMessage(curScintilla, SCI_SETSTYLING, 10, (LPARAM)9999);
+
+    //while (len)
+    //{
+    //    ::SendMessage(curScintilla, SCI_SETSTYLING, 1, (LPARAM)9999);
+    //    len--;
+    //}
+    //::SendMessage(curScintilla, SCI_SETSTYLING, selection_start - 150, (LPARAM)9999);
+
+
+
+    //SCI_SETSTYLINGEX(int length, const char *styles)
+    //::SendMessage(curScintilla, SCI_SETSTYLINGEX, 31, (LPARAM)STYLE_DEFAULT);
+
+    //SCI_AUTOCSHOW(int lenEntered, const char *list)
+    //::SendMessage(curScintilla, SCI_AUTOCSHOW, 1, (LPARAM)"@access @author @copyright");
+
+    //int konj = '@';
+    //char buff[200];
+    //sprintf(buff, "%d", selection_start);
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)buff);
 }
 
 int cStyleComment(HWND &curScintilla, char *line)
@@ -610,7 +695,6 @@ void undo_closed_tab()
     {
         closed_files_index = 0;
     }
-
 }
 
 char all_files[300][MAX_PATH] = {};
@@ -813,9 +897,7 @@ void buffer_left()
 
     WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
 
-    //::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)path_text);
     ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)path_text);
 }
 
 void buffer_right()
@@ -839,9 +921,7 @@ void buffer_right()
 
     WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
 
-    //::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)path_text);
     ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)path_text);
 }
 
 void wrap_with_tag()
@@ -882,6 +962,7 @@ void url_encode_selection()
         ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_start, (LPARAM)encoded);
         
         ::SendMessage(curScintilla, SCI_SETSEL , selection_start + strlen(encoded), selection_start + strlen(encoded));
+
         free(encoded);
         
         ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
@@ -906,8 +987,9 @@ void url_decode_selection()
         char *encoded = url_decode(selection);
 
         ::SendMessage(curScintilla, SCI_INSERTTEXT, selection_start, (LPARAM)encoded);
-        
+
         ::SendMessage(curScintilla, SCI_SETSEL , selection_start + strlen(encoded), selection_start + strlen(encoded));
+
         free(encoded);
 
         ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
@@ -918,21 +1000,19 @@ void url_decode_selection()
  * Url encode/decode functions from http://www.geekhideout.com/urlcode.shtml
  * Why reinvent the wheel?
  */
-
-/* Converts a hex character to its integer value */
-char from_hex(char ch) {
+char from_hex(char ch)
+{
   return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
 }
 
-/* Converts an integer value to its hex character*/
-char to_hex(char code) {
+char to_hex(char code)
+{
   static char hex[] = "0123456789abcdef";
   return hex[code & 15];
 }
 
-/* Returns a url-encoded version of str */
-/* IMPORTANT: be sure to free() the returned string after use */
-char *url_encode(char *str) {
+char *url_encode(char *str)
+{
   char *pstr = str, *buf = (char *) malloc(strlen(str) * 3 + 1), *pbuf = buf;
   while (*pstr) {
     if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') 
@@ -947,9 +1027,8 @@ char *url_encode(char *str) {
   return buf;
 }
 
-/* Returns a url-decoded version of str */
-/* IMPORTANT: be sure to free() the returned string after use */
-char *url_decode(char *str) {
+char *url_decode(char *str)
+{
   char *pstr = str, *buf = (char *) malloc(strlen(str) + 1), *pbuf = buf;
   while (*pstr) {
     if (*pstr == '%') {
@@ -1109,7 +1188,7 @@ int auto_numbering()
     ::SendMessage(curScintilla, SCI_SETSEL , line_start , line_start);
 
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    ::SendMessage(curScintilla, SCI_SEARCHNEXT , SCFIND_REGEXP, (LPARAM)"^[\\s\\#\\*]*[0-9]+[.]");
+    ::SendMessage(curScintilla, SCI_SEARCHNEXT , SCFIND_REGEXP, (LPARAM)"^[\\s\\#\\*]*[0-9]+[.\\)-]");
 
     int search_position_start = ::SendMessage(curScintilla, SCI_GETSELECTIONNSTART, 0, 0);
     int search_position_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND , 0, 0);
@@ -1153,7 +1232,12 @@ int auto_numbering()
             num++;            
             char buff[100];
             sprintf(buff, "%d", num);
-            strcat(buff, ". ");
+
+            //strcat(buff, ". ");
+
+            // ADD LAST CHARACTER
+            strcat(buff, substr(selection, slen - 1, slen));
+            strcat(buff, " ");
 
             ::SendMessage(curScintilla, SCI_INSERTTEXT, save_position, (LPARAM) buff );
             
@@ -1162,7 +1246,7 @@ int auto_numbering()
             if (strstr(selection, "#") || strstr(selection, "*"))
             {
                 first++;
-                
+
                 //char trace[100];
                 //sprintf(trace, "%d|%s|%d", first, selection, last);
                 //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) trace );
@@ -1196,6 +1280,174 @@ int auto_numbering()
     return ret;
 }
 
+void docblock_keywords()
+{
+    int lang = -100;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
+
+    if (!( lang == L_C
+       || lang == L_CPP
+       || lang == L_JS
+       || lang == L_PHP
+       || lang == L_CSS))
+    {
+        return;
+    }
+
+    HWND curScintilla = getCurrentScintilla();
+
+    int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"^\\s+\\*\\s\\@");
+
+    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONNSTART, 0, 0);
+    int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
+
+    if (selection_start != selection_end && selection_end == save_position)
+    {
+        ::SendMessage(curScintilla, SCI_AUTOCSETSEPARATOR, (LPARAM)'|', 0);
+        ::SendMessage(curScintilla, SCI_AUTOCSHOW, 1, (LPARAM)"@access  |@author  |@copyright  |@example  |@global  |@license  |@link  |@name  |@package  |@param  |@return  |@see  |@static  |@subpackage  |@todo  |@var  |@version  ");
+    }
+}
+
+void Ruby_Newline(HWND &curScintilla)
+{
+    int lang = -100;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
+
+    if (lang != L_RUBY)
+    {
+        return;
+    }
+
+    int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
+
+    int line_start = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, save_line - 1, 0);
+    int line_end   = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, save_line - 1, 0);
+
+    char line[9999];
+    ::SendMessage(curScintilla, SCI_SETSEL, line_start, line_end);
+    ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&line);
+    ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
+
+    trim(line);
+
+    if (strlen(line) < 2) return;
+
+    char seven[8];
+    strncpy(seven, line, 7);
+
+    char six[7];
+    strncpy(six, line, 6);
+
+    char five[6];
+    strncpy(five, line, 5);
+
+    char four[5];
+    strncpy(four, line, 4);
+
+    char tree[4];
+    strncpy(tree, line, 3);
+
+    char *end = substr(line, strlen(line) - 2, strlen(line));
+
+    if (strstr(seven, "private")
+
+     || strstr(six, "module")
+     || strstr(six, "unless")
+     || strstr(six, "ensure")
+
+     || strstr(five, "class")
+     || strstr(five, "elsif")
+     || strstr(five, "begin")
+
+     || strstr(four, "def ")
+     || strstr(four, "else")
+
+     || strstr(tree, "if ")
+
+     || strstr(line, " do |")
+     || strstr(line, "do|")
+
+     || strstr(end, "do")
+        )
+    {
+        ::SendMessage(curScintilla, SCI_TAB , 0, 0 );
+    }
+}
+
+void RubyExtra(int character)
+{
+    int lang = -100;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
+
+    if (lang != L_RUBY)
+    {
+        return;
+    }
+
+
+    HWND curScintilla = getCurrentScintilla();
+
+    int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
+
+    int save_line_start = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE , save_line, 0);
+    int save_line_end   = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION , save_line, 0);
+
+    ::SendMessage(curScintilla, SCI_SETSEL, save_line_start, save_line_end);
+
+    char content[9999];
+
+    ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&content);
+    ::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
+
+    trim(content);
+
+    char *cmp;
+    int check_len = -1;
+
+    if (character == 'd') {
+        cmp = "end";
+        check_len = 3;
+    }
+    else if (character == 'e') {
+        if (strcmp(content, "else") == 0 && strlen(content) == 4) {
+            cmp = "else";
+            check_len = 4;
+        }
+        else {
+            cmp = "ensure";
+            check_len = 6;
+        }
+    }
+    else if (character == 'f') {
+        cmp = "elsif";
+        check_len = 5;
+    }
+    else {
+        return;
+    }
+
+    if (strcmp(content, cmp) == 0 && strlen(content) == check_len)
+    {
+        int fold_line = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, save_line, 0);
+        //int fold_pos  = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, fold_line, 0);
+
+        int match_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_line, 0);
+        ::SendMessage(curScintilla, SCI_SETLINEINDENTATION, save_line, match_indent);
+
+        if (::SendMessage(curScintilla, SCI_AUTOCACTIVE, 0, 0))
+        {
+            ::SendMessage(curScintilla, SCI_AUTOCCANCEL, 0, 0);
+            ::SendMessage(curScintilla, SCI_AUTOCSHOW, 1, (LPARAM)"#fix_autocomplete");
+        }
+    }
+}
 
 /**
  * HELPER FUNCTIONS
@@ -1231,14 +1483,6 @@ char* getEOL()
         ENDL = "\n";
 
     return ENDL;
-}
-
-void getline(char* line)
-{
-    HWND curScintilla = getCurrentScintilla();
-    char selection[999];
-    ::SendMessage(curScintilla, SCI_GETCURLINE, 100, (LPARAM)selection);
-    strncpy (line, selection, 999);
 }
 
 char* trim_left(char *s)
