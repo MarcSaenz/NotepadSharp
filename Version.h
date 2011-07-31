@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "0.9.9"
-#define VERSION_NUM 0,9,9
+#define VERSION_TEXT "1.1.0"
+#define VERSION_NUM 1,1,0
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -20,17 +20,10 @@ Features implemented so far:\r\n\r\n\
 - Autonumbering inside CommentDoc/DocBlock and # comment\r\n\
 - Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private\r\n\
 - Match \"end\" indentation for Ruby\r\n\
-- Autocomplete CommentDoc/DocBlock keywords\
+- Autocomplete CommentDoc/DocBlock keywords\r\n\
+- Peek CSS hex colors\r\n\
+- Scroll past end of file\
 ")
-
-#define ABOUT TEXT("\
-This plugin implements all the features I wanted to see in Notepad++ for years\r\n\
-\r\n\
-jvdanilo\r\n\
-\r\n\
-Source code: https://github.com/jvdanilo/NotepadSharp \r\n\
-")
-
 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS

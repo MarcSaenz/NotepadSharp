@@ -15,6 +15,8 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+#include "stdio.h"
+#include "tchar.h"
 #include "PluginDefinition.h"
 
 #define SC_UPDATE_SELECTION 0x2
@@ -67,6 +69,8 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 int fire_enter;
 int curly_brace;
 
+char hex[] = {"0123456789AaBbCcDdEeFf#\r\n\t"};
+
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
     switch (notifyCode->nmhdr.code) 
@@ -74,7 +78,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         case SCN_CHARADDED:
             if (notifyCode->ch == '\n' || notifyCode->ch == '\r')
             {
-                fire_enter = 1;
+                if (fire_enter == 0) {
+                    fire_enter = 1;
+                }
             }
             else if (notifyCode->ch == '}')
             {
@@ -93,6 +99,15 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             {
                 RubyExtra(notifyCode->ch);
             }
+
+            char character[2];
+            sprintf(character, "%c", notifyCode->ch);
+
+            if (strstr(hex, character))
+            {
+                peek_hex_color();
+            }
+            character[0] = '\0';
             break;
         case SCN_UPDATEUI:
             if (SC_PERFORMED_USER && fire_enter)
@@ -107,6 +122,19 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
                 curly_brace = 0;
             }
 
+            if (notifyCode->updated == SC_UPDATE_V_SCROLL) {
+                peek_hex_color();
+            }
+            
+            break;
+        case SCN_MODIFIED:
+            if (notifyCode->modificationType & SC_MOD_DELETETEXT)
+            {
+                //peek_hex_color();
+            }
+            break;
+        case NPPN_LANGCHANGED:
+            peek_hex_color();
             break;
         case NPPN_FILEBEFORECLOSE :
             get_all_files();
@@ -114,6 +142,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 
         case NPPN_FILECLOSED:
             find_missing();
+            break;
+        case NPPN_BUFFERACTIVATED:
+            peek_hex_color();
             break;
         case NPPN_SHUTDOWN:
         {

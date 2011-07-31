@@ -1,4 +1,4 @@
-Notepad# (current version 0.9.9)
+Notepad# (current version 1.1)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
@@ -23,3 +23,5 @@ Implemented so far:
 - Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private
 - Match "end" indentation for Ruby
 - Autocomplete CommentDoc/DocBlock keywords
+- Peek CSS hex colors
+- Scroll past end of file

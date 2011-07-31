@@ -118,12 +118,17 @@ void EMBED_code();
 void ruler();
 
 int auto_numbering();
-void style();
 
 void Ruby_Newline(HWND &curScintilla);
 void RubyExtra(int character);
 
 void docblock_keywords();
+
+// Peek HEX/CSS colors
+void peek_hex_color();
+void clear_hex_indicators();
+long htoi (char s[]);
+long hchartoi (char hexdig, int pos);
 
 // Heper functions
 HWND getCurrentScintilla();

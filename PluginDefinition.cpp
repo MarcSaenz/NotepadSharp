@@ -129,13 +129,7 @@ void commandMenuInit()
     setCommand(14, TEXT("Features"), show_features, NULL, false);
     setCommand(15, TEXT("About"), show_about, NULL, false);
 
-    //ShortcutKey *ESC_key = new ShortcutKey;
-    //ESC_key->_isAlt      = false;
-    //ESC_key->_isCtrl     = false;
-    //ESC_key->_isShift    = false;
-    //ESC_key->_key        = 0x1B; // ESC
-    //setCommand(16, TEXT("ESC"), style, ESC_key, false);
-
+    ::SendMessage(getCurrentScintilla(), SCI_SETENDATLASTLINE , (WPARAM)false, (LPARAM)false);
 }
 
 //
@@ -176,7 +170,26 @@ void show_features()
 
 void show_about()
 {
-    ::MessageBox(nppData._nppHandle, ABOUT, TEXT("Notepad#"), MB_OK);
+    HWND curScintilla = getCurrentScintilla();
+    char about[9999];
+    strcpy(about, "");
+    strcat(about , "Notepad#\r\n\
+Version: ");
+    strcat(about , VERSION_TEXT);
+    strcat(about, "\
+\r\nSource code: https://github.com/jvdanilo/NotepadSharp \r\n\
+\r\n\
+This plugin implements all the features I wanted to see in Notepad++ for years\r\n\
+\r\n\
+jvdanilo");
+
+    TCHAR about_wide[MAX_PATH];
+
+    int len = MultiByteToWideChar ((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, about, -1, NULL, 0);
+
+    MultiByteToWideChar ((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, about, -1, about_wide, len);
+
+    ::MessageBox(nppData._nppHandle, about_wide, TEXT("Notepad#"), MB_OK);
 }
 
 void Newline()
@@ -186,8 +199,18 @@ void Newline()
     int lang = -100;
     ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
 
-    int position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-    int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
+    int position;
+    int line_number;
+
+    position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
+
+    //int indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, line_number - 1, 0);
+    //::SendMessage(curScintilla, SCI_SETLINEINDENTATION, line_number, indent);
+    
+    //copyindent(curScintilla, line_number - 1, position);
+    position   = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
     char line[9999];
     ::SendMessage(curScintilla, SCI_GETLINE, line_number - 1 , (LPARAM)&line);
@@ -312,12 +335,16 @@ void indentEndingCurlyBrace()
         return;
     }
 
+    // FIND MATCHING BRACE INDENTATION
+    int opening_brace_position = ::SendMessage(curScintilla, SCI_BRACEMATCH, save_position - 1, 0);
+
+    if (opening_brace_position == -1)
+    {
+        return;
+    }
+
     ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
-    // FIND MATCHING BRACE INDENTATION
-    ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_SEARCH_GOTOMATCHINGBRACE);
-
-    int opening_brace_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int opening_brace_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, opening_brace_position, 0);
 
     int brace_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, opening_brace_line, 0);
@@ -351,74 +378,6 @@ int poundComment(HWND &curScintilla, char *line)
     }
 
     return ret;
-}
-
-void style()
-{
-    HWND curScintilla = getCurrentScintilla();
-
-
-    ::SendMessage(curScintilla, SCI_SETSEL, 0, 0);
-
-    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
-    ::SendMessage(curScintilla, SCI_SEARCHNEXT, SCFIND_REGEXP, (LPARAM)"@\\w+");
-
-    int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
-    int selection_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
-
-    //::SendMessage(curScintilla, SCI_STYLESETFONT, 2, (LPARAM) "Times New Roman");
-    //::SendMessage(curScintilla, SCI_STYLESETSIZE, 2, (LPARAM)14);
-    //::SendMessage(curScintilla, SCI_STYLESETITALIC, 2, (LPARAM)true);
-    
-    //::SendMessage(curScintilla, SCI_SETTEXT, 0, (LPARAM)"1270");
-
-    //::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)0xff);
-    //::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)2);
-
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 1);
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 2);
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 1);
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 1, 2);
-
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 2, 1);
-    //::SendMessage(curScintilla, SCI_SETSTYLING, 2, 2);
-
-
-
-
-
-    ::SendMessage(curScintilla, SCI_SETSEL, 0, 0);
-    int len =  selection_end - selection_start;
-
-    //SCI_STYLESETITALIC(int styleNumber, bool italic)
-    ::SendMessage(curScintilla, SCI_STYLESETITALIC, 9999, (LPARAM)true);
-    //SCI_STYLESETBOLD(int styleNumber, bool bold)
-    ::SendMessage(curScintilla, SCI_STYLESETBOLD, 9999, (LPARAM)true);
-    
-    //SCI_STARTSTYLING(int pos, int mask)
-    ::SendMessage(curScintilla, SCI_STARTSTYLING, 0, (LPARAM)31);
-
-    ::SendMessage(curScintilla, SCI_SETSTYLING, 10, (LPARAM)9999);
-
-    //while (len)
-    //{
-    //    ::SendMessage(curScintilla, SCI_SETSTYLING, 1, (LPARAM)9999);
-    //    len--;
-    //}
-    //::SendMessage(curScintilla, SCI_SETSTYLING, selection_start - 150, (LPARAM)9999);
-
-
-
-    //SCI_SETSTYLINGEX(int length, const char *styles)
-    //::SendMessage(curScintilla, SCI_SETSTYLINGEX, 31, (LPARAM)STYLE_DEFAULT);
-
-    //SCI_AUTOCSHOW(int lenEntered, const char *list)
-    //::SendMessage(curScintilla, SCI_AUTOCSHOW, 1, (LPARAM)"@access @author @copyright");
-
-    //int konj = '@';
-    //char buff[200];
-    //sprintf(buff, "%d", selection_start);
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)buff);
 }
 
 int cStyleComment(HWND &curScintilla, char *line)
@@ -466,7 +425,7 @@ void XHTMLindent(HWND &curScintilla, int position, int line_number)
 
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
     //::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[^?][^\\/]+>$");
-    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\/]+[\\w\\W\\b\\B]+?>\\s*$");
+    ::SendMessage(curScintilla, SCI_SEARCHPREV, SCFIND_REGEXP, (LPARAM)"<[\\w\\/]+[\\w\\W\\b\\B]*?>\\s*$");
 
     char selection[9999];
     ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
@@ -650,11 +609,16 @@ void delete_current_line()
 {
     HWND curScintilla = getCurrentScintilla();
 
-    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     int position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
     int column   = ::SendMessage(curScintilla, SCI_GETCOLUMN, position, 0);
+
+    if (line == (::SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0) - 1)) {
+        return;
+    }
+
+    ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
     int line_start  = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, line, 0);
     int line_length = ::SendMessage(curScintilla, SCI_LINELENGTH, line, 0);
@@ -1448,6 +1412,231 @@ void RubyExtra(int character)
         }
     }
 }
+
+void clear_hex_indicators()
+{
+    HWND curScintilla = getCurrentScintilla();
+    
+    int length = ::SendMessage(curScintilla, SCI_GETTEXT, 0, 0);
+    int i = 1;
+    while (i <= 20) {
+        ::SendMessage(curScintilla, SCI_SETINDICATORCURRENT, i, 0);
+        ::SendMessage(curScintilla, SCI_INDICATORCLEARRANGE, 0, length);
+        i++;
+    }
+}
+
+void peek_hex_color()
+{
+    int lang = -100;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
+    
+    clear_hex_indicators();
+
+    if (lang != L_CSS) {
+        return;
+    }
+
+    HWND curScintilla = getCurrentScintilla();
+
+
+    int save_caret_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+    int save_caret_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+    //SCI_GETFIRSTVISIBLELINE first line is 0
+    int first_visible_line = ::SendMessage(curScintilla, SCI_GETFIRSTVISIBLELINE, 0, 0);
+    
+    //SCI_POSITIONFROMLINE(int line)
+    int first_line_position = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, first_visible_line, 0);
+
+    //char buff[999];
+    //sprintf(buff, "%d", first_visible_line);
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) buff );
+
+    //return;
+
+    //SCI_SETANCHOR(int pos)
+    ::SendMessage(curScintilla, SCI_SETANCHOR, first_line_position, 0);
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+
+
+    char found[9999];
+    strcpy(found, "");
+
+    int i = 1;
+    int indicator;
+
+    int set_colors = 0;
+
+    //return;
+
+    while (i <= 20)
+    //while (i <= 2)
+    {
+        ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+        ::SendMessage(curScintilla, SCI_SEARCHNEXT, SCFIND_REGEXP, (LPARAM)"#[0-9AaBbCcDdEeFf]+");
+
+
+        //return;
+
+        int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+        int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND , 0, 0);
+
+        int selection_length = selection_end - selection_start;
+
+        if (selection_start == selection_end)
+        {
+            break;
+        }
+        else if (selection_length > 0 && selection_length != 4 && selection_length != 7)
+        {
+            ::SendMessage(curScintilla, SCI_SETSELECTIONSTART, selection_end, 0);
+            ::SendMessage(curScintilla, SCI_SETSELECTIONEND, selection_end, 0);
+
+            ::SendMessage(curScintilla, SCI_SETANCHOR, selection_end, 0);
+            //i++;
+            continue;
+        }
+
+        int hex_length;
+
+        char selection[6];
+        ::SendMessage(curScintilla, SCI_GETSELTEXT , 0, (LPARAM)&selection);
+
+        //SCI_SETSELECTIONSTART(int pos
+        ::SendMessage(curScintilla, SCI_SETSELECTIONSTART, selection_end, 0);
+        ::SendMessage(curScintilla, SCI_SETSELECTIONEND, selection_end, 0);
+
+        ::SendMessage(curScintilla, SCI_SETANCHOR, selection_end, 0);
+        //::SendMessage(curScintilla, SCI_SETSEL, selection_end, selection_end);
+        //::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
+
+        char hex[6];
+        strcpy(hex, substr(selection,1, strlen(selection)));
+
+        if (strlen(hex) == 3)
+        {
+            hex[0] = selection[1];
+            hex[1] = selection[1];
+            hex[2] = selection[2];
+            hex[3] = selection[2];
+            hex[4] = selection[3];
+            hex[5] = selection[3];
+            hex[6] = '\0';
+
+            hex_length = 3;
+        }
+        else {
+            hex_length = 6;
+        }
+
+        // Reverse RGB to BGR which Scintilla uses?
+        char reverse[6];
+        reverse[0] = toupper(hex[4]);
+        reverse[1] = toupper(hex[5]);
+        reverse[2] = toupper(hex[2]);
+        reverse[3] = toupper(hex[3]);
+        reverse[4] = toupper(hex[0]);
+        reverse[5] = toupper(hex[1]);
+        reverse[6] = '\0';
+
+        indicator = i;
+        
+        // |#006699|
+        char search[9];
+        strcpy(search, "|");
+        strcat(search, reverse);
+        //strcat(search, "|");
+        //search[9] = '\0';
+        //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) getEOL());
+        //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) search );
+
+        if (strstr(found, search)) {
+            i--;
+            int j = 0;
+            while (j <= set_colors) {
+                if (htoi(reverse) == ::SendMessage(curScintilla, SCI_INDICGETFORE, j, 0))
+                {
+                    indicator = j;
+                    break;
+                }
+                else {
+                    j++;
+                }
+            }
+        }
+        else {
+            strcat(found, search);
+            set_colors++;
+        }
+
+        ::SendMessage(curScintilla, SCI_INDICSETSTYLE, indicator, INDIC_ROUNDBOX);
+
+        ::SendMessage(curScintilla, SCI_INDICSETUNDER, indicator, (LPARAM)true);
+        ::SendMessage(curScintilla, SCI_INDICSETFORE, indicator, (LPARAM)htoi(reverse));
+        ::SendMessage(curScintilla, SCI_INDICSETALPHA, indicator, (LPARAM)255);
+
+        ::SendMessage(curScintilla, SCI_SETINDICATORCURRENT, indicator, 0);
+        ::SendMessage(curScintilla, SCI_INDICATORFILLRANGE, selection_start + 1, hex_length);
+
+        i++;
+    }
+    
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) getEOL());
+    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) found );
+
+    //::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
+    ::SendMessage(curScintilla, SCI_SETSELECTIONSTART, save_caret_start, 0);
+    ::SendMessage(curScintilla, SCI_SETSELECTIONEND, save_caret_end, 0);
+
+}
+
+long htoi (char s[])
+{
+
+    char *p = &s[strlen(s)-1];
+    long deci = 0, dig = 0;
+    int pos = 0;
+
+    while (p >= s) {
+
+        if ((dig = hchartoi(*p, pos)) < 0 ) {
+            printf("Error\n");
+            return -1;
+
+        }
+        deci += dig;
+        --p;
+        ++pos;
+
+    }
+    return deci;
+}
+
+/* convert hex char to decimal value */
+long hchartoi (char hexdig, int pos)
+{
+
+    char hexdigits[] = "0123456789ABCDEF";
+    char *p = &hexdigits[0];
+    long deci = 0;
+    int i;
+
+    while (*p != toupper(hexdig) && deci < 16) {
+
+        ++p;
+        ++deci;
+
+    }
+    if (*p == toupper(hexdig)) {
+       for (i = 0; i < pos; i++)
+           deci *= 16;
+       return deci;
+
+    }
+    return -1;
+}
+
 
 /**
  * HELPER FUNCTIONS
