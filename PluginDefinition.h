@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 16;
+const int nbFunc = 19;
 
 
 //
@@ -129,6 +129,11 @@ void peek_hex_color();
 void clear_hex_indicators();
 long htoi (char s[]);
 long hchartoi (char hexdig, int pos);
+
+// Convert TABS to SPACES and reverse
+void spaces_to_tabs();
+void tabs_to_spaces();
+void spaces_tabs(bool tabs);
 
 // Heper functions
 HWND getCurrentScintilla();

@@ -130,7 +130,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         case SCN_MODIFIED:
             if (notifyCode->modificationType & SC_MOD_DELETETEXT)
             {
-                //peek_hex_color();
+                peek_hex_color();
             }
             break;
         case NPPN_LANGCHANGED:
@@ -145,6 +145,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             break;
         case NPPN_BUFFERACTIVATED:
             peek_hex_color();
+			::SendMessage(getCurrentScintilla(), SCI_SETENDATLASTLINE , (WPARAM)false, (LPARAM)false);
             break;
         case NPPN_SHUTDOWN:
         {

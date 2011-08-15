@@ -126,8 +126,11 @@ void commandMenuInit()
     C_key->_key        = 0x43; // C
     setCommand(12, TEXT("Column ruler"), ruler, C_key, false);
 
-    setCommand(14, TEXT("Features"), show_features, NULL, false);
-    setCommand(15, TEXT("About"), show_about, NULL, false);
+    setCommand(14, TEXT("Leading TABS to Spaces"), tabs_to_spaces, NULL, false);
+    setCommand(15, TEXT("Leading Spaces to TABS"), spaces_to_tabs, NULL, false);
+
+    setCommand(17, TEXT("Features"), show_features, NULL, false);
+    setCommand(18, TEXT("About"), show_about, NULL, false);
 
     ::SendMessage(getCurrentScintilla(), SCI_SETENDATLASTLINE , (WPARAM)false, (LPARAM)false);
 }
@@ -613,8 +616,20 @@ void delete_current_line()
     int position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
     int column   = ::SendMessage(curScintilla, SCI_GETCOLUMN, position, 0);
+	int lines    = ::SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0);
 
-    if (line == (::SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0) - 1)) {
+    if (line == (lines - 1)) {
+		//SCI_GETLINEENDPOSITION(int line)
+		int line_start = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, line, 0);
+		int line_end   = ::SendMessage(curScintilla, SCI_GETLINEENDPOSITION, line, 0);
+
+		if (line_start != line_end)
+		{
+			::SendMessage(curScintilla, SCI_SETSELECTIONSTART, line_start, 0);
+			::SendMessage(curScintilla, SCI_SETSELECTIONEND, line_end, 0);	
+			::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
+		}
+
         return;
     }
 
@@ -1439,23 +1454,13 @@ void peek_hex_color()
 
     HWND curScintilla = getCurrentScintilla();
 
-
     int save_caret_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
     int save_caret_end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
 
     //SCI_GETFIRSTVISIBLELINE first line is 0
     int first_visible_line = ::SendMessage(curScintilla, SCI_GETFIRSTVISIBLELINE, 0, 0);
     
-    //SCI_POSITIONFROMLINE(int line)
     int first_line_position = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, first_visible_line, 0);
-
-    //char buff[999];
-    //sprintf(buff, "%d", first_visible_line);
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) buff );
-
-    //return;
-
-    //SCI_SETANCHOR(int pos)
     ::SendMessage(curScintilla, SCI_SETANCHOR, first_line_position, 0);
     ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
 
@@ -1468,16 +1473,11 @@ void peek_hex_color()
 
     int set_colors = 0;
 
-    //return;
 
     while (i <= 20)
-    //while (i <= 2)
     {
         ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
         ::SendMessage(curScintilla, SCI_SEARCHNEXT, SCFIND_REGEXP, (LPARAM)"#[0-9AaBbCcDdEeFf]+");
-
-
-        //return;
 
         int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
         int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND , 0, 0);
@@ -1503,13 +1503,10 @@ void peek_hex_color()
         char selection[6];
         ::SendMessage(curScintilla, SCI_GETSELTEXT , 0, (LPARAM)&selection);
 
-        //SCI_SETSELECTIONSTART(int pos
         ::SendMessage(curScintilla, SCI_SETSELECTIONSTART, selection_end, 0);
         ::SendMessage(curScintilla, SCI_SETSELECTIONEND, selection_end, 0);
 
         ::SendMessage(curScintilla, SCI_SETANCHOR, selection_end, 0);
-        //::SendMessage(curScintilla, SCI_SETSEL, selection_end, selection_end);
-        //::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
 
         char hex[6];
         strcpy(hex, substr(selection,1, strlen(selection)));
@@ -1530,7 +1527,7 @@ void peek_hex_color()
             hex_length = 6;
         }
 
-        // Reverse RGB to BGR which Scintilla uses?
+        // Reverse RGB to BGR which Scintilla uses
         char reverse[6];
         reverse[0] = toupper(hex[4]);
         reverse[1] = toupper(hex[5]);
@@ -1542,14 +1539,9 @@ void peek_hex_color()
 
         indicator = i;
         
-        // |#006699|
         char search[9];
         strcpy(search, "|");
         strcat(search, reverse);
-        //strcat(search, "|");
-        //search[9] = '\0';
-        //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) getEOL());
-        //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) search );
 
         if (strstr(found, search)) {
             i--;
@@ -1581,11 +1573,7 @@ void peek_hex_color()
 
         i++;
     }
-    
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) getEOL());
-    //::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM) found );
 
-    //::SendMessage(curScintilla, SCI_SETSEL, save_position, save_position);
     ::SendMessage(curScintilla, SCI_SETSELECTIONSTART, save_caret_start, 0);
     ::SendMessage(curScintilla, SCI_SETSELECTIONEND, save_caret_end, 0);
 
@@ -1635,6 +1623,42 @@ long hchartoi (char hexdig, int pos)
 
     }
     return -1;
+}
+
+void spaces_to_tabs()
+{
+	spaces_tabs(true);
+}
+
+void tabs_to_spaces()
+{
+	spaces_tabs(false);
+}
+
+void spaces_tabs(bool tabs)
+{
+    HWND curScintilla = getCurrentScintilla();
+
+	::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+	int setting = ::SendMessage(curScintilla, SCI_GETUSETABS, 0, 0);
+	int lines = ::SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0);
+
+	//SCI_SETUSETABS(bool useTabs)
+	::SendMessage(curScintilla, SCI_SETUSETABS, ((tabs) ? true : false), 0);
+
+	while (lines) {
+		int indentation = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, lines, 0);
+		::SendMessage(curScintilla, SCI_SETLINEINDENTATION, lines, 1);
+		::SendMessage(curScintilla, SCI_SETLINEINDENTATION, lines, indentation);
+
+		lines--;
+	}
+
+	// Restore setting
+	::SendMessage(curScintilla, SCI_SETUSETABS, setting, 0);
+
+    ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
 

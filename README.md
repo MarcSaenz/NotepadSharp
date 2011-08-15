@@ -1,8 +1,7 @@
-Notepad# (current version 1.1)
+Notepad# (current version 1.2)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
-
 
 Implemented so far:
 
@@ -25,3 +24,4 @@ Implemented so far:
 - Autocomplete CommentDoc/DocBlock keywords
 - Peek CSS hex colors
 - Scroll past end of file
+- Convert leading TABS to Spaces and reverse
