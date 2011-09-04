@@ -1692,17 +1692,25 @@ void paste_indented()
 		
 		while (loop <= line)
 		{
-			int fold_parent   = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+			int fold_parent = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+
+			if (fold_parent == -1) break;
+
 			int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
+			int last_child    = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
 
-			int last_child = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
-
-			if (loop == last_child) {
-				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+			if (fold_parent == 0) {
+				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, 0);
 			}
 			else {
-				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+				if (loop == last_child) {
+					::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+				}
+				else {
+					::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+				}
 			}
+
 
 			loop++;
 		}
