@@ -36,7 +36,7 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Notepad#");
 //
 // Here define the number of your plugin commands
 //
-const int nbFunc = 19;
+const int nbFunc = 20;
 
 
 //
@@ -134,6 +134,9 @@ long hchartoi (char hexdig, int pos);
 void spaces_to_tabs();
 void tabs_to_spaces();
 void spaces_tabs(bool tabs);
+
+void paste_indented();
+
 
 // Heper functions
 HWND getCurrentScintilla();

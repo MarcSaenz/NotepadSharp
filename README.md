@@ -1,4 +1,4 @@
-Notepad# (current version 1.2)
+Notepad# (current version 1.3)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years.
@@ -25,3 +25,4 @@ Implemented so far:
 - Peek CSS hex colors
 - Scroll past end of file
 - Convert leading TABS to Spaces and reverse
+- Paste indented

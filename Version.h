@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "1.2.0"
-#define VERSION_NUM 1,2,0
+#define VERSION_TEXT "1.3.0"
+#define VERSION_NUM 1,3,0
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -23,7 +23,8 @@ Features implemented so far:\r\n\r\n\
 - Autocomplete CommentDoc/DocBlock keywords\r\n\
 - Peek CSS hex colors\r\n\
 - Scroll past end of file\r\n\
-- Convert leading TABS to Spaces and reverse\
+- Convert leading TABS to Spaces and reverse\r\n\
+- Paste indented\
 ")
 
 #ifdef APSTUDIO_INVOKED

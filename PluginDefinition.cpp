@@ -72,13 +72,19 @@ void commandMenuInit()
     D_key->_key        = 0x44; // D
     setCommand(0, TEXT("Delete current line"), delete_current_line, D_key, false);
 
+    ShortcutKey *ctrlv = new ShortcutKey;
+    ctrlv->_isAlt      = false;
+    ctrlv->_isCtrl     = true;
+    ctrlv->_isShift    = false;
+    ctrlv->_key        = 0x56; // V
+    setCommand(1, TEXT("Paste indented"), paste_indented, ctrlv, false);
 
     ShortcutKey *T_key = new ShortcutKey;
     T_key->_isAlt      = false;
     T_key->_isCtrl     = true;
     T_key->_isShift    = true;
     T_key->_key        = 0x54; // T
-    setCommand(1, TEXT("Undo close tab"), undo_closed_tab, T_key, false);
+    setCommand(2, TEXT("Undo close tab"), undo_closed_tab, T_key, false);
 
     ShortcutKey *I_key = new ShortcutKey;
     I_key->_isAlt      = false;
@@ -93,14 +99,14 @@ void commandMenuInit()
     LEFT_key->_isCtrl     = false;
     LEFT_key->_isShift    = false;
     LEFT_key->_key        = VK_LEFT ; // LEFT
-    setCommand(3, TEXT("Tab left"), buffer_left, LEFT_key, false);
+    setCommand(4, TEXT("Tab left"), buffer_left, LEFT_key, false);
 
     ShortcutKey *RIGHT_key = new ShortcutKey;
     RIGHT_key->_isAlt      = true;
     RIGHT_key->_isCtrl     = false;
     RIGHT_key->_isShift    = false;
     RIGHT_key->_key        = VK_RIGHT ; // RIGHT
-    setCommand(4, TEXT("Tab right"), buffer_right, RIGHT_key, false);
+    setCommand(5, TEXT("Tab right"), buffer_right, RIGHT_key, false);
 
     ShortcutKey *W_key = new ShortcutKey;
     W_key->_isAlt      = true;
@@ -114,23 +120,24 @@ void commandMenuInit()
     period->_isCtrl     = true;
     period->_isShift    = false;
     period->_key        = 0xBE;// VK_OEM_PERIOD  0xBE  "." any country/region
-    setCommand(7, TEXT("Close last open tag"), end_tag, period, false);
+    setCommand(8, TEXT("Close last open tag"), end_tag, period, false);
 
-    setCommand(9, TEXT("URLencode selection"), url_encode_selection, NULL, false);
-    setCommand(10, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
+    setCommand(10, TEXT("URLencode selection"), url_encode_selection, NULL, false);
+    setCommand(11, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
 
     ShortcutKey *C_key = new ShortcutKey;
     C_key->_isAlt      = false;
     C_key->_isCtrl     = true;
     C_key->_isShift    = true;
     C_key->_key        = 0x43; // C
-    setCommand(12, TEXT("Column ruler"), ruler, C_key, false);
+    setCommand(13, TEXT("Column ruler"), ruler, C_key, false);
 
-    setCommand(14, TEXT("Leading TABS to Spaces"), tabs_to_spaces, NULL, false);
-    setCommand(15, TEXT("Leading Spaces to TABS"), spaces_to_tabs, NULL, false);
+    setCommand(15, TEXT("Leading TABS to Spaces"), tabs_to_spaces, NULL, false);
+    setCommand(16, TEXT("Leading Spaces to TABS"), spaces_to_tabs, NULL, false);
 
-    setCommand(17, TEXT("Features"), show_features, NULL, false);
-    setCommand(18, TEXT("About"), show_about, NULL, false);
+    setCommand(18, TEXT("Features"), show_features, NULL, false);
+    setCommand(19, TEXT("About"), show_about, NULL, false);
+
 
     ::SendMessage(getCurrentScintilla(), SCI_SETENDATLASTLINE , (WPARAM)false, (LPARAM)false);
 }
@@ -193,6 +200,7 @@ jvdanilo");
     MultiByteToWideChar ((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, about, -1, about_wide, len);
 
     ::MessageBox(nppData._nppHandle, about_wide, TEXT("Notepad#"), MB_OK);
+
 }
 
 void Newline()
@@ -1418,6 +1426,7 @@ void RubyExtra(int character)
         //int fold_pos  = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, fold_line, 0);
 
         int match_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_line, 0);
+
         ::SendMessage(curScintilla, SCI_SETLINEINDENTATION, save_line, match_indent);
 
         if (::SendMessage(curScintilla, SCI_AUTOCACTIVE, 0, 0))
@@ -1661,6 +1670,47 @@ void spaces_tabs(bool tabs)
     ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
 
+void paste_indented()
+{
+    HWND curScintilla = getCurrentScintilla();
+	
+	::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
+
+	int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
+
+    ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND , 0, (LPARAM)IDM_EDIT_PASTE);
+
+	int position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
+
+	if (save_line != line)
+	{
+		int tab_width = ::SendMessage(curScintilla, SCI_GETTABWIDTH, 0, 0);
+
+		int loop = save_line;
+		
+		while (loop <= line)
+		{
+			int fold_parent   = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+			int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
+
+			int last_child = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
+
+			if (loop == last_child) {
+				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+			}
+			else {
+				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+			}
+
+			loop++;
+		}
+
+	}
+	
+	::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
+}
 
 /**
  * HELPER FUNCTIONS
