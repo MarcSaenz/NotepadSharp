@@ -1693,6 +1693,9 @@ void paste_indented()
 		while (loop <= line)
 		{
 			int fold_parent   = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+
+			if (fold_parent == -1) break;
+
 			int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
 
 			int last_child = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
