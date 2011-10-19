@@ -1,7 +1,7 @@
-Notepad# (current version 1.3.2)
+Notepad# (current version 1.3.3)
 --------
 
-This plugin implements all the features I wanted to see in Notepad++ for years.
+This plugin implements all the features I wanted to see in Notepad++ for years, plus some more.
 
 Implemented so far:
 
@@ -19,7 +19,7 @@ Implemented so far:
 - Indent after opened tag - XML, HTML and PHP
 - Close last open tag
 - Autonumbering inside CommentDoc/DocBlock and # comment
-- Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private
+- Indent after instruction for Ruby - module|class|def|do|if|else|elsif|private
 - Match "end" indentation for Ruby
 - Autocomplete CommentDoc/DocBlock keywords
 - Peek CSS hex colors

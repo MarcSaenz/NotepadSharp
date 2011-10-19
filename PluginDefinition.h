@@ -76,7 +76,7 @@ void show_about();
 // Commenting helpers
 void Newline();
 int poundComment(HWND &curScintilla, char *line);
-int cStyleComment(HWND &curScintilla, char *line);
+int cStyleComment(HWND &curScintilla, char *line, int line_number);
 
 // Cyrly brace indentation
 int indentAfterCurlyBrace(HWND &curScintilla, int line_number);
@@ -144,5 +144,6 @@ char* getEOL();
 char* trim_left(char *s);
 char* trim(char *s);
 char* substr(char* string, int begin, int end);
+int strpos(char *haystack, char *needle);
 
 #endif //PLUGINDEFINITION_H

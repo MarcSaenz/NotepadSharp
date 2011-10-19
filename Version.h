@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "1.3.2"
-#define VERSION_NUM 1,3,2
+#define VERSION_TEXT "1.3.3"
+#define VERSION_NUM 1,3,3
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\

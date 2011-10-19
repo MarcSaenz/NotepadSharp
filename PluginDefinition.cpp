@@ -113,7 +113,7 @@ void commandMenuInit()
     W_key->_isCtrl     = true;
     W_key->_isShift    = false;
     W_key->_key        = 0x57; // W
-    setCommand(6, TEXT("Wrap selection with tag"), wrap_with_tag, W_key, false);
+    setCommand(7, TEXT("Wrap selection with tag"), wrap_with_tag, W_key, false);
 
     ShortcutKey *period = new ShortcutKey;
     period->_isAlt      = false;
@@ -122,8 +122,8 @@ void commandMenuInit()
     period->_key        = 0xBE;// VK_OEM_PERIOD  0xBE  "." any country/region
     setCommand(8, TEXT("Close last open tag"), end_tag, period, false);
 
-    setCommand(10, TEXT("URLencode selection"), url_encode_selection, NULL, false);
-    setCommand(11, TEXT("URLdecode selection"), url_decode_selection, NULL, false);
+    setCommand(10, TEXT("URL encode selection"), url_encode_selection, NULL, false);
+    setCommand(11, TEXT("URL decode selection"), url_decode_selection, NULL, false);
 
     ShortcutKey *C_key = new ShortcutKey;
     C_key->_isAlt      = false;
@@ -189,7 +189,7 @@ Version: ");
     strcat(about, "\
 \r\nSource code: https://github.com/jvdanilo/NotepadSharp \r\n\
 \r\n\
-This plugin implements all the features I wanted to see in Notepad++ for years\r\n\
+This plugin implements all the features I wanted to see in Notepad++ for years, plus some more\r\n\
 \r\n\
 jvdanilo");
 
@@ -210,11 +210,8 @@ void Newline()
     int lang = -100;
     ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
 
-    int position;
-    int line_number;
-
-    position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
-    line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
+    int position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+    int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
     //int indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, line_number - 1, 0);
     //::SendMessage(curScintilla, SCI_SETLINEINDENTATION, line_number, indent);
@@ -224,7 +221,7 @@ void Newline()
     line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
     char line[9999];
-    ::SendMessage(curScintilla, SCI_GETLINE, line_number - 1 , (LPARAM)&line);
+    ::SendMessage(curScintilla, SCI_GETLINE, line_number - 1 , (LPARAM)line);
     
     trim_left(line);
 
@@ -232,25 +229,25 @@ void Newline()
     {
         case L_C:
         case L_CPP:
-            cStyleComment(curScintilla, line);
+            cStyleComment(curScintilla, line, line_number);
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
         case L_CSS:
-            if (cStyleComment(curScintilla, line) == 0
+            if (cStyleComment(curScintilla, line, line_number) == 0
              && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
             {
 
             }
             break;
         case L_JS:
-            if (cStyleComment(curScintilla, line) == 0
+            if (cStyleComment(curScintilla, line, line_number) == 0
              && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
             {
 
             }
             break;
         case L_PHP:
-            if ( cStyleComment(curScintilla, line) == 0
+            if ( cStyleComment(curScintilla, line, line_number) == 0
               && poundComment(curScintilla, line) == 0
               && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
             {
@@ -391,12 +388,12 @@ int poundComment(HWND &curScintilla, char *line)
     return ret;
 }
 
-int cStyleComment(HWND &curScintilla, char *line)
+int cStyleComment(HWND &curScintilla, char *line, int line_number)
 {
     int ret = 0;
     char comment[2];
     strncpy(comment, line, 2);
-    
+
     if (strstr(comment,"* ") && ! strstr(line, "*/") )
     {
         ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
@@ -423,10 +420,24 @@ int cStyleComment(HWND &curScintilla, char *line)
         ::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
         auto_numbering();
     }
-    else if (strstr(comment, "*/"))
+	else
     {
-        ret = 3;
-        ::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
+		char check_line[9999];
+		::SendMessage(curScintilla, SCI_GETLINE, line_number - 1, (LPARAM)check_line);
+
+		int check_line_end = ::SendMessage(curScintilla, SCI_LINELENGTH, line_number - 1, 0);
+
+		check_line[check_line_end] = '\0';
+
+		if (check_line[0] != '*' && strlen(trim(check_line)) == 2)
+		{
+			strncpy(comment, trim(check_line), 2);
+
+			if (strstr(comment, "*/")) {
+				ret = 3;
+				::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
+			}
+		}
     }
     return ret;
 }
@@ -1450,6 +1461,24 @@ void clear_hex_indicators()
     }
 }
 
+//void clear_hex_indicators()
+//{
+//    HWND curScintilla = getCurrentScintilla();
+//    
+//    int first_visible_line = ::SendMessage(curScintilla, SCI_GETFIRSTVISIBLELINE, 0, 0);
+//	int first_line_pos     = ::SendMessage(curScintilla, SCI_POSITIONFROMLINE, first_visible_line, 0);
+//
+//    int length = ::SendMessage(curScintilla, SCI_GETTEXT, 0, 0);
+//
+//   int i = 1;
+//    while (i <= 20) {
+//        ::SendMessage(curScintilla, SCI_SETINDICATORCURRENT, i, 0);
+//        ::SendMessage(curScintilla, SCI_INDICATORCLEARRANGE, first_line_pos, length);
+//        i++;
+//    }
+//}
+
+
 void peek_hex_color()
 {
     int lang = -100;
@@ -1686,33 +1715,101 @@ void paste_indented()
 
 	if (save_line != line)
 	{
-		int tab_width = ::SendMessage(curScintilla, SCI_GETTABWIDTH, 0, 0);
+		int lang = -100;
+		::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
 
-		int loop = save_line;
+		int tab_width;
+		int loop;
+
+		switch(lang) {
+			case L_C:
+			case L_CPP:
+			case L_CSS:
+			case L_JS:
+			case L_PHP:
+			case L_HTML:
+			case L_XML:
+				tab_width = ::SendMessage(curScintilla, SCI_GETTABWIDTH, 0, 0);
+
+				loop = save_line;
 		
-		while (loop <= line)
-		{
-			int fold_parent = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+				while (loop <= line)
+				{
+					int fold_parent = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
 
-			if (fold_parent == -1) break;
+					if (fold_parent == -1) break;
 
-			int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
-			int last_child    = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
+					int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
+					// Dont move this line, it redraws the screen
+					int last_child    = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
 
-			if (fold_parent == 0) {
-				::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, 0);
-			}
-			else {
-				if (loop == last_child) {
-					::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+					if (fold_parent == 0) {
+						::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, 0);
+					}
+					else {
+						char line_contents[9999];
+						::SendMessage(curScintilla, SCI_GETLINE, loop, (LPARAM)line_contents);
+						char check[2];
+						char check2[6];
+
+						strncpy(check, trim_left(line_contents), 2);
+						strncpy(check2, trim_left(line_contents), 6);
+
+						if (strstr(check, "* ") || strstr(check, "*/")) {
+							::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + 1);
+						}
+						else if (loop == last_child || strstr(check2, "} else")) {
+							::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+						}
+						else {
+							::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+						}
+					}
+
+					loop++;
 				}
-				else {
-					::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+			break;
+			case L_RUBY:
+				tab_width = ::SendMessage(curScintilla, SCI_GETTABWIDTH, 0, 0);
+
+				loop = save_line;
+		
+				while (loop <= line)
+				{
+					int fold_parent = ::SendMessage(curScintilla, SCI_GETFOLDPARENT, loop, 0);
+
+					if (fold_parent == -1) break;
+
+					int parent_indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, fold_parent, 0);
+					// Dont move this line, it redraws the screen
+					int last_child    = ::SendMessage(curScintilla, SCI_GETLASTCHILD, fold_parent , -1);
+
+					if (fold_parent == 0) {
+						::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, 0);
+					}
+					else {
+						char line_contents[9999];
+						::SendMessage(curScintilla, SCI_GETLINE, loop, (LPARAM)line_contents);
+						char check_else[4];
+						char check_elsif[5];
+
+						strncpy(check_else, trim_left(line_contents), 4);
+						strncpy(check_elsif, trim_left(line_contents), 5);
+
+						if (loop == last_child
+						 || strstr(check_else, "else")
+						 || strstr(check_elsif, "elsif")
+						) {
+							::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent);
+						}
+						else {
+							::SendMessage(curScintilla, SCI_SETLINEINDENTATION , loop, parent_indent + tab_width);
+						}
+					}
+
+					loop++;
 				}
-			}
-
-
-			loop++;
+			break;
 		}
 
 	}
@@ -1805,4 +1902,10 @@ char* substr(char* string, int begin, int end)
     return temp;
 }
 
-
+int strpos(char *haystack, char *needle)
+{
+   char *p = strstr(haystack, needle);
+   if (p)
+      return p - haystack;
+   return -1;   // Not found = -1.
+}
