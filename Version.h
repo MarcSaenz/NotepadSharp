@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "1.3.3"
-#define VERSION_NUM 1,3,3
+#define VERSION_TEXT "1.3.4"
+#define VERSION_NUM 1,3,4
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -18,7 +18,7 @@ Features implemented so far:\r\n\r\n\
 - Indent after opened tag - XML, HTML and PHP\r\n\
 - Close last open tag\r\n\
 - Autonumbering inside CommentDoc/DocBlock and # comment\r\n\
-- Indent after istruction for Ruby - module|class|def|do|if|else|elsif|private\r\n\
+- Indent after instruction for Ruby - module|class|def|do|if|else|elsif|private\r\n\
 - Match \"end\" indentation for Ruby\r\n\
 - Autocomplete CommentDoc/DocBlock keywords\r\n\
 - Peek CSS hex colors\r\n\

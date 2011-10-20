@@ -874,6 +874,7 @@ void insertList()
     ::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)"FILES AFTER CLOSE");
 }
 
+/*
 void buffer_left()
 {
     HWND curScintilla = getCurrentScintilla();
@@ -897,7 +898,44 @@ void buffer_left()
 
     ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
 }
+*/
 
+void buffer_left()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int buffer;
+    int pos;
+
+    buffer = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    pos    = ::SendMessage(nppData._nppHandle, NPPM_GETPOSFROMBUFFERID , buffer, 0);
+
+	int which;
+	::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+
+    pos--;
+
+	if (which == 1) {
+		pos = pos - 1073741823 - 1;
+	}
+
+    int left_buffer = ::SendMessage(nppData._nppHandle, NPPM_GETBUFFERIDFROMPOS , pos, which );
+
+	//if (left_buffer == 0)
+	//{
+	//	::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)"INVALID");
+	//}
+
+    TCHAR full_file_path[MAX_PATH];
+    char path_text[MAX_PATH];
+
+    ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, left_buffer, (LPARAM)full_file_path);
+
+    WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
+
+    ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
+}
+/*
 void buffer_right()
 {
     HWND curScintilla = getCurrentScintilla();
@@ -916,6 +954,43 @@ void buffer_right()
     char path_text[MAX_PATH];
 
     ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, left_buffer, (LPARAM)full_file_path);
+
+    WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
+
+    ::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE , 0, (LPARAM)full_file_path);
+}
+*/
+void buffer_right()
+{
+    HWND curScintilla = getCurrentScintilla();
+
+    int buffer;
+    int pos;
+
+    buffer = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+    pos = ::SendMessage(nppData._nppHandle, NPPM_GETPOSFROMBUFFERID , buffer, 0);
+
+    pos++;
+	
+	int which;
+	::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+	
+	if (which == 1) {
+		pos = pos - 1073741823 - 1;
+	}
+
+    int right_buffer = ::SendMessage(nppData._nppHandle, NPPM_GETBUFFERIDFROMPOS , pos, which);
+
+	//if (right_buffer == 0)
+	//{
+		//::SendMessage(curScintilla, SCI_INSERTTEXT, 0, (LPARAM)"INVALID");
+	//}
+
+
+    TCHAR full_file_path[MAX_PATH];
+    char path_text[MAX_PATH];
+
+    ::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, right_buffer, (LPARAM)full_file_path);
 
     WideCharToMultiByte((int)::SendMessage(curScintilla, SCI_GETCODEPAGE, 0, 0), 0, full_file_path, -1, path_text, MAX_PATH, NULL, NULL);
 
