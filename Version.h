@@ -1,6 +1,6 @@
 
-#define VERSION_TEXT "1.3.4"
-#define VERSION_NUM 1,3,4
+#define VERSION_TEXT "1.4.1"
+#define VERSION_NUM 1,4,1
 
 #define FEATURES TEXT("\
 Features implemented so far:\r\n\r\n\
@@ -24,7 +24,8 @@ Features implemented so far:\r\n\r\n\
 - Peek CSS hex colors\r\n\
 - Scroll past end of file\r\n\
 - Convert leading TABS to Spaces and reverse\r\n\
-- Paste indented\
+- Paste indented\r\n\
+- Double click edit tag\
 ")
 
 #ifdef APSTUDIO_INVOKED

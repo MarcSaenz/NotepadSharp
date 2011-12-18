@@ -138,6 +138,12 @@ void commandMenuInit()
     setCommand(18, TEXT("Features"), show_features, NULL, false);
     setCommand(19, TEXT("About"), show_about, NULL, false);
 
+	ShortcutKey *L_key = new ShortcutKey;
+    L_key->_isAlt      = true;
+    L_key->_isCtrl     = false;
+    L_key->_isShift    = false;
+    L_key->_key        = 0x49; // L
+    setCommand(20, TEXT("Select string"), select_string, L_key, false);
 
     ::SendMessage(getCurrentScintilla(), SCI_SETENDATLASTLINE , (WPARAM)false, (LPARAM)false);
 }
@@ -243,7 +249,6 @@ void Newline()
             if (cStyleComment(curScintilla, line, line_number) == 0
              && indentAfterCurlyBrace(curScintilla, line_number - 1) == 0)
             {
-
             }
             break;
         case L_PHP:
@@ -393,9 +398,10 @@ int cStyleComment(HWND &curScintilla, char *line, int line_number)
     int ret = 0;
     char comment[2];
     strncpy(comment, line, 2);
+	comment[2] = '\0';
 
     if (strstr(comment,"* ") && ! strstr(line, "*/") )
-    {
+	{
         ::SendMessage(curScintilla, SCI_BEGINUNDOACTION, 0, 0);
 
         ret = 1;
@@ -431,14 +437,16 @@ int cStyleComment(HWND &curScintilla, char *line, int line_number)
 
 		if (check_line[0] != '*' && strlen(trim(check_line)) == 2)
 		{
+			ret = 3;
 			strncpy(comment, trim(check_line), 2);
 
-			if (strstr(comment, "*/")) {
-				ret = 3;
+			if (comment[0] == '*' && comment[1] == '/') {
+				ret = 4;
 				::SendMessage(curScintilla, SCI_DELETEBACK, 0, 0);
 			}
 		}
     }
+
     return ret;
 }
 
@@ -539,6 +547,8 @@ void end_tag()
     int save_position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int save_line     = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, save_position, 0);
 
+	int html_comment = 9;
+
     char line[9999];
 
     ::SendMessage(curScintilla, SCI_GETCURLINE, 9999, (LPARAM)&line);
@@ -569,7 +579,12 @@ void end_tag()
         end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
         ::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
 
-        if (end == last_search)
+		if (
+			::SendMessage(curScintilla, SCI_GETSTYLEAT, ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0) + 1, 0) == html_comment
+		) {
+			continue;
+		}
+        else if (end == last_search)
         {
             ::SendMessage(curScintilla, SCI_SETSEL, end, end);
             break;
@@ -1891,6 +1906,220 @@ void paste_indented()
 	
 	::SendMessage(curScintilla, SCI_ENDUNDOACTION, 0, 0);
 }
+
+void watch_dblclick(int position, int line) {
+    HWND curScintilla = getCurrentScintilla();
+
+	int comment = 9;
+	
+	int save_selection_start = (int) ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+	int save_selection_end   = (int) ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+	int start = (int) ::SendMessage(curScintilla, SCI_WORDSTARTPOSITION, position, (LPARAM)true);
+	int word_end = (int) ::SendMessage(curScintilla, SCI_WORDENDPOSITION, position, (LPARAM)true);
+
+	int character = (int) ::SendMessage(curScintilla, SCI_GETCHARAT, start - 1 , 0);
+
+	bool run = false;
+	bool starting = false;
+
+	if (::SendMessage(curScintilla, SCI_GETSTYLEAT, start + 1, 0) == comment) {
+		return;
+	}
+
+	if (character == '<') {
+		run = true;
+		starting = true;
+		::SendMessage(curScintilla, SCI_SETSELECTIONSTART, start - 1, 0);
+		::SendMessage(curScintilla, SCI_SETSELECTIONEND, start - 1, 0);
+	}
+	else if (character == '/' && '<' == (int) ::SendMessage(curScintilla, SCI_GETCHARAT, start - 2 , 0) ) {
+		run = true;
+		starting = false;
+		::SendMessage(curScintilla, SCI_SETSELECTIONSTART, start - 2, 0);
+		::SendMessage(curScintilla, SCI_SETSELECTIONEND, start - 2, 0);
+	}
+	
+	if ( ! run) return;
+	
+    char selection[9999];
+
+    ::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+	::SendMessage(curScintilla, SCI_SEARCHNEXT , SCFIND_REGEXP, (LPARAM)"<[\\w\\/][\\w\\W\\b\\B]*?>");
+	::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+	
+	if (selection[strlen(selection) - 2] == '/') {
+		::SendMessage(curScintilla, SCI_SETSELECTIONSTART, save_selection_start, 0);
+		::SendMessage(curScintilla, SCI_SETSELECTIONEND, save_selection_end, 0);
+		return;
+	}
+
+	selection[0] = '\0';
+
+	int end = 0;
+    int last_search = 0;
+
+	int i = 1;
+
+	if (starting) {
+		end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+	}
+
+	int first_selection_start = start;
+	int first_selection_end = first_selection_end = word_end;
+
+	do {
+		if (starting) {
+			::SendMessage(curScintilla, SCI_SETSELECTIONSTART, end, 0);
+			::SendMessage(curScintilla, SCI_SETSELECTIONEND, end, 0);
+		}
+
+		::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+		::SendMessage(
+			curScintilla,
+			(starting) ? SCI_SEARCHNEXT : SCI_SEARCHPREV,
+			SCFIND_REGEXP,
+			(LPARAM)"<[\\w\\/][\\w\\W\\b\\B]*?>"
+		);
+
+		end = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+		::SendMessage(curScintilla, SCI_GETSELTEXT, 0, (LPARAM)&selection);
+			
+		if (end == last_search) {
+			::SendMessage(curScintilla, SCI_SETSELECTIONSTART, end, 0);
+			::SendMessage(curScintilla, SCI_SETSELECTIONEND, end, 0);
+			break;
+		}
+			
+		last_search = end;
+
+		if (
+			::SendMessage(curScintilla, SCI_GETSTYLEAT, ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0) + 1, 0) == comment
+		) {
+			continue;
+		}
+		else if (selection[1] == '/') {
+			(starting) ? i-- : i++;
+		}
+		else if (selection[strlen(selection) - 2] == '/') {
+			continue;
+		}
+		else {
+			(starting) ? i++ : i--;
+		}
+	}
+	while (i);
+
+	if (starting) {
+		int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+		int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+		
+		::SendMessage(curScintilla, SCI_SETSELECTION, selection_start + 2, selection_end - 1);
+		::SendMessage(curScintilla, SCI_ADDSELECTION, first_selection_start, first_selection_end);
+	}
+	else {
+		::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+		::SendMessage(curScintilla, SCI_SEARCHNEXT, SCFIND_REGEXP, (LPARAM)"<[\\w]*?");
+
+		int selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+		int selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+		
+		::SendMessage(curScintilla, SCI_SETSELECTION, first_selection_start, first_selection_end);
+		::SendMessage(curScintilla, SCI_ADDSELECTION, selection_start + 1, selection_end);
+	}
+}
+
+bool is_string_style(int style) {
+	bool ret = false;
+
+	int lang = -100;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTLANGTYPE, 0, (LPARAM)&lang);
+
+	switch(lang) {
+		case L_CPP:
+			if (style == 6) {
+				ret = true;
+			}
+		case L_HTML:
+			if (style == 6) {
+				ret = true;
+			}
+			break;
+		case L_JS:
+			if (style == 6
+			 || style == 49
+			 || style == 48
+			) {
+				ret = true;
+			}
+			break;
+	}
+	return ret;
+}
+
+void select_string() {
+    HWND curScintilla = getCurrentScintilla();
+
+	//int string_style = 6;
+	
+    int position = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
+	::SendMessage(curScintilla, SCI_SETSEL, position + 1, position + 1);
+
+	int selection_start = 0;
+	int selection_end = 0;
+
+	int style_one;
+
+	int i = 2;
+	while (1) {
+		::SendMessage(curScintilla, SCI_SEARCHANCHOR, 0, 0);
+		::SendMessage(curScintilla, SCI_SEARCHNEXT , SCFIND_REGEXP, (LPARAM)"['\"]");
+
+		selection_start = ::SendMessage(curScintilla, SCI_GETSELECTIONSTART, 0, 0);
+		selection_end   = ::SendMessage(curScintilla, SCI_GETSELECTIONEND, 0, 0);
+
+		if ( selection_start == selection_end ) return;
+
+		style_one = ::SendMessage(curScintilla, SCI_GETSTYLEAT, selection_start + 1, 0);
+
+		//char buff[100];
+		//sprintf(buff, "%d", style_one);
+        //::SendMessage(curScintilla, SCI_INSERTTEXT, ::SendMessage(curScintilla, SCI_GETLENGTH, 0, 0 ), (LPARAM)buff );
+		//return;
+
+		//if (style_one == string_style) {
+		if (is_string_style(style_one)) {
+			break;
+		}
+		else {
+			::SendMessage(curScintilla, SCI_SETSEL, selection_start + 1, selection_start + 1);
+		}
+		//return;
+	}
+
+	//return;
+
+	int original_start = selection_start;
+	int style;
+
+	int character = 0;
+	int prev = 0;
+	while (1) {
+		selection_start++;
+
+		style = ::SendMessage(curScintilla, SCI_GETSTYLEAT, selection_start, 0);
+		prev = ::SendMessage(curScintilla, SCI_GETCHARAT, selection_start - 1, 0);
+		character = ::SendMessage(curScintilla, SCI_GETCHARAT, selection_start, 0);
+
+		//if (character == '"' && style == string_style) {
+		if (prev != '\\' && (character == '"' || character == '\'') && is_string_style(style)) {
+			break;
+		}
+	}
+	
+	::SendMessage(curScintilla, SCI_SETSEL, original_start + 1, selection_start);
+}
+
 
 /**
  * HELPER FUNCTIONS

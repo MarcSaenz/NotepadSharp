@@ -1,4 +1,4 @@
-Notepad# (current version 1.3.4)
+Notepad# (current version 1.4.1)
 --------
 
 This plugin implements all the features I wanted to see in Notepad++ for years, plus some more.
@@ -26,3 +26,5 @@ Implemented so far:
 - Scroll past end of file
 - Convert leading TABS to Spaces and reverse
 - Paste indented
+- Double click edit tag
+

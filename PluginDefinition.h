@@ -137,6 +137,11 @@ void spaces_tabs(bool tabs);
 
 void paste_indented();
 
+// dblclick tag select
+void watch_dblclick(int position, int line);
+
+bool is_string_style(int style);
+void select_string();
 
 // Heper functions
 HWND getCurrentScintilla();
