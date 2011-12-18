@@ -133,6 +133,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
                 peek_hex_color();
             }
             break;
+
+		case SCN_DOUBLECLICK:
+			watch_dblclick(notifyCode->position, notifyCode->line);
+			break;
+
         case NPPN_LANGCHANGED:
             peek_hex_color();
             break;

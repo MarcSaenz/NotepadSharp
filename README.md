@@ -26,3 +26,5 @@ Implemented so far:
 - Scroll past end of file
 - Convert leading TABS to Spaces and reverse
 - Paste indented
+- Double click edit tag
+
