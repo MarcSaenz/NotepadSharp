@@ -235,6 +235,8 @@ void Newline()
     {
         case L_C:
         case L_CPP:
+		case L_CS:
+		case L_JAVA:
             cStyleComment(curScintilla, line, line_number);
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
@@ -322,6 +324,8 @@ void indentEndingCurlyBrace()
 
     if (!( lang == L_C
        || lang == L_CPP
+	   || lang == L_CS
+	   || lang == L_JAVA
        || lang == L_JS
        || lang == L_PHP
        || lang == L_CSS))
