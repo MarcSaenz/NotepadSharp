@@ -219,10 +219,6 @@ void Newline()
     int position    = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     int line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
-    //int indent = ::SendMessage(curScintilla, SCI_GETLINEINDENTATION, line_number - 1, 0);
-    //::SendMessage(curScintilla, SCI_SETLINEINDENTATION, line_number, indent);
-    
-    //copyindent(curScintilla, line_number - 1, position);
     position   = ::SendMessage(curScintilla, SCI_GETCURRENTPOS, 0, 0);
     line_number = ::SendMessage(curScintilla, SCI_LINEFROMPOSITION, position, 0);
 
@@ -237,6 +233,8 @@ void Newline()
         case L_CPP:
 		case L_CS:
 		case L_JAVA:
+		case L_USER:
+		case 53: // PowerShell
             cStyleComment(curScintilla, line, line_number);
             indentAfterCurlyBrace(curScintilla, line_number - 1);
             break;
@@ -328,7 +326,9 @@ void indentEndingCurlyBrace()
 	   || lang == L_JAVA
        || lang == L_JS
        || lang == L_PHP
-       || lang == L_CSS))
+       || lang == L_CSS
+	   || lang == 53 // PowerShell
+	   || lang == L_USER))
     {
         return;
     }
